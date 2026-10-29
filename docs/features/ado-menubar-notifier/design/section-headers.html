@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Section headers</title>
+<style>/* Tokens — approximations macOS 26 system colors / SF Pro (HIG). En SwiftUI : couleurs sémantiques système, pas de valeurs codées. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  --fs-body:13px; --fs-small:11px; --fs-title:15px;
+  --label:rgba(0,0,0,.85); --label2:rgba(0,0,0,.55); --label3:rgba(0,0,0,.3);
+  --sep:rgba(0,0,0,.1); --hover:rgba(0,0,0,.06); --fill:rgba(0,0,0,.05);
+  --accent:#007AFF; --accent-fg:#fff; --red:#FF3B30; --orange:#FF9500; --green:#34C759; --yellow:#FFCC00; --gray:#8E8E93;
+  --panel:rgba(246,246,248,.80); --panel-solid:#f6f6f8; --window:#ececec; --control:#fff;
+  --shadow:0 0 0 .5px rgba(0,0,0,.18),0 12px 40px rgba(0,0,0,.25);
+  --r-panel:16px; --r-row:8px; --r-ctl:6px;
+  --wall:linear-gradient(135deg,#7aa7d8 0%,#b7c9e8 40%,#e9c9b4 100%);
+  --menubar:rgba(255,255,255,.55);
+  --t-bug:#CC293D; --t-story:#009CCC; --t-task:#F2CB1D; --t-pbi:#009CCC; --t-feature:#773B93;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --label:rgba(255,255,255,.88); --label2:rgba(255,255,255,.55); --label3:rgba(255,255,255,.3);
+  --sep:rgba(255,255,255,.12); --hover:rgba(255,255,255,.08); --fill:rgba(255,255,255,.07);
+  --accent:#0A84FF; --red:#FF453A; --orange:#FF9F0A; --green:#30D158; --yellow:#FFD60A; --gray:#98989D;
+  --panel:rgba(38,38,42,.78); --panel-solid:#26262a; --window:#2b2b2e; --control:#3a3a3d;
+  --shadow:0 0 0 .5px rgba(255,255,255,.15),0 12px 40px rgba(0,0,0,.6);
+  --wall:linear-gradient(135deg,#1d2b4a 0%,#2f3550 50%,#4a3040 100%); --menubar:rgba(30,30,30,.5);
+}}
+:root[data-theme="dark"]{
+  --label:rgba(255,255,255,.88); --label2:rgba(255,255,255,.55); --label3:rgba(255,255,255,.3);
+  --sep:rgba(255,255,255,.12); --hover:rgba(255,255,255,.08); --fill:rgba(255,255,255,.07);
+  --accent:#0A84FF; --red:#FF453A; --orange:#FF9F0A; --green:#30D158; --yellow:#FFD60A; --gray:#98989D;
+  --panel:rgba(38,38,42,.78); --panel-solid:#26262a; --window:#2b2b2e; --control:#3a3a3d;
+  --shadow:0 0 0 .5px rgba(255,255,255,.15),0 12px 40px rgba(0,0,0,.6);
+  --wall:linear-gradient(135deg,#1d2b4a 0%,#2f3550 50%,#4a3040 100%); --menubar:rgba(30,30,30,.5);
+}
+*{box-sizing:border-box}
+body{margin:0;font:var(--fs-body)/1.35 var(--font);color:var(--label);background:var(--wall);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:1px;border-radius:5px}
+.doc{max-width:1100px;margin:0 auto;padding:16px}
+.doc-head{background:var(--panel-solid);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px}
+.doc-head h1{font-size:17px;margin:0 0 4px}
+.doc-head p{margin:4px 0;color:var(--label2)}
+.switch{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.switch button{border:0;background:var(--fill);padding:4px 10px;border-radius:999px;cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.switch .lbl{color:var(--label2);align-self:center;margin-right:4px;font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em}
+.menubar{height:26px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;justify-content:flex-end;align-items:center;gap:14px;padding:0 14px;border-radius:8px 8px 0 0;font-size:13px}
+.menubar .mbi{display:inline-flex;align-items:center;justify-content:center;height:22px;min-width:26px;border-radius:5px;padding:0 4px}
+.menubar .mbi.open{background:var(--hover)}
+.stage{position:relative;min-height:640px;border-radius:8px;padding-bottom:24px}
+.glass{background:var(--panel);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);box-shadow:var(--shadow);border-radius:var(--r-panel)}
+.muted-text{color:var(--label2)} .small{font-size:var(--fs-small)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.btn{border:0;border-radius:var(--r-ctl);padding:3px 10px;background:var(--control);box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 1px 1px rgba(0,0,0,.06);cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:none}
+.btn:disabled{opacity:.45;cursor:default}
+.ibtn{border:0;background:transparent;width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--label2)}
+.ibtn:hover{background:var(--hover);color:var(--label)}
+.ibtn[aria-pressed="true"]{color:var(--accent)}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tdot{width:8px;height:8px;border-radius:2px;flex:none}
+.spin{width:12px;height:12px;border:2px solid var(--label3);border-top-color:var(--label);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.skel{background:linear-gradient(90deg,var(--fill),var(--hover),var(--fill));background-size:200% 100%;animation:sk 1.4s infinite;border-radius:4px;height:10px}
+@keyframes sk{to{background-position:-200% 0}}
+.notes{background:var(--panel-solid);border-radius:12px;padding:12px 16px;margin-top:16px;box-shadow:var(--shadow)}
+.notes h2{font-size:14px;margin:4px 0 8px} .notes li{margin:3px 0}
+/* popup menu natif (NSMenu) */
+.menu{position:absolute;z-index:50;min-width:200px;padding:5px;background:var(--panel);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);box-shadow:var(--shadow);border-radius:10px}
+.menu [role=menuitem]{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;padding:3px 10px;border-radius:5px;cursor:default;white-space:nowrap}
+.menu [role=menuitem]:hover,.menu [role=menuitem]:focus{background:var(--accent);color:#fff;outline:none}
+.menu [role=menuitem]:hover .muted-text,.menu [role=menuitem]:focus .muted-text{color:rgba(255,255,255,.8)}
+.menu [role=menuitem][aria-disabled=true]{color:var(--label3);background:none}
+.menu .mhead{padding:3px 10px;color:var(--label2);font-size:var(--fs-small);font-weight:600}
+.menu hr{border:0;border-top:1px solid var(--sep);margin:5px 8px}
+.menu .kbd{margin-left:auto;color:var(--label3);padding-left:20px}
+.catdot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.cat-Proposed{background:var(--gray)} .cat-InProgress{background:var(--accent)} .cat-Resolved{background:var(--orange)} .cat-Completed{background:var(--green)} .cat-Removed{background:var(--label3)}
+@media (max-width:700px){.stage{min-height:auto}}
+.panel{position:absolute;right:40px;top:32px;width:380px;max-height:600px;display:flex;flex-direction:column;overflow:hidden}
+.panel .scroll{overflow:auto;flex:1;padding:4px 6px}
+.banner{display:flex;gap:8px;align-items:flex-start;margin:8px 8px 2px;padding:8px 10px;border-radius:10px;background:var(--fill)}
+.banner.err{background:color-mix(in srgb,var(--red) 14%,transparent)} .banner.err .bi{color:var(--red)}
+.banner.mute .bi{color:var(--label2)}
+.banner .bt{flex:1} .banner .bt b{display:block;font-weight:600}
+.sec-h{display:flex;align-items:center;gap:6px;padding:8px 8px 4px;font-size:var(--fs-small);font-weight:600;color:var(--label2);border:0;background:none;width:100%;text-align:left;cursor:pointer;border-radius:6px}
+.sec-h:hover{background:var(--hover)}
+.sec-h .cnt{margin-left:auto;font-weight:500;color:var(--label3)}
+.sec-h .tw{transition:transform .15s} .sec-h[aria-expanded=false] .tw{transform:rotate(-90deg)}
+.row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-row);cursor:pointer;width:100%;border:0;background:none;text-align:left}
+.row:hover{background:var(--hover)}
+.row .main{flex:1;min-width:0}
+.row .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center}
+.row .t span.tt{overflow:hidden;text-overflow:ellipsis}
+.row .s{font-size:var(--fs-small);color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center}
+.newdot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.nodot{width:7px;flex:none}
+.draft{font-size:10px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--fill);color:var(--label2);flex:none}
+.wid{color:var(--label2);font-variant-numeric:tabular-nums;flex:none}
+.pill{display:inline-flex;align-items:center;gap:5px;border:0;padding:2px 6px 2px 8px;border-radius:999px;background:var(--fill);font-size:var(--fs-small);cursor:pointer;flex:none;white-space:nowrap}
+.pill:hover{background:var(--hover);box-shadow:0 0 0 .5px var(--sep)}
+.rowwrap{border-radius:var(--r-row)}
+.rowerr{margin:0 8px 6px 23px;padding:6px 8px;border-radius:6px;font-size:var(--fs-small);background:color-mix(in srgb,var(--red) 12%,transparent);display:flex;gap:6px;align-items:flex-start}
+.rowerr .x{margin-left:auto;border:0;background:none;cursor:pointer;color:var(--label2)}
+.empty{padding:6px 8px 10px 23px;color:var(--label2);font-size:12px}
+.foot{display:flex;align-items:center;gap:2px;padding:6px 8px;border-top:1px solid var(--sep)}
+.foot .sync{flex:1;font-size:var(--fs-small);color:var(--label2);padding-left:4px}
+.more{display:block;padding:6px 8px 8px 23px;font-size:12px;color:var(--accent);text-decoration:none}
+.unconf{padding:28px 24px 20px;text-align:center}
+.unconf h2{font-size:var(--fs-title);margin:10px 0 4px}
+.datepop{padding:10px}
+.datepop label{display:block;font-size:var(--fs-small);color:var(--label2);margin-bottom:4px}
+.datepop input{font:inherit;padding:3px 6px;border-radius:5px;border:1px solid var(--sep);background:var(--control);color:var(--label)}
+.datepop .err{color:var(--red);font-size:var(--fs-small);min-height:14px;margin-top:4px}
+@media (max-width:700px){.panel{position:relative;right:auto;top:auto;width:auto;margin:8px}}
+
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;padding:20px;border-radius:12px;background:var(--wall)}
+.col h2{font-size:14px;margin:0 0 4px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.col p{margin:0 0 10px;font-size:12px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.4);min-height:32px}
+.col .panel{position:relative;right:auto;top:auto;width:100%;max-height:none}
+.col .scroll{max-height:420px;padding:4px 6px}
+.hidden-host{display:none}
+/* commun : en-tête */
+.h{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;text-align:left;cursor:pointer;padding:5px 8px;color:var(--label2);font-size:var(--fs-small);font-weight:600}
+.h .cnt{margin-left:auto;font-weight:500;color:var(--label3)}
+/* A — style menu extra */
+.optA .h{font-size:13px;color:var(--label);padding:8px 8px 4px}
+.optA .h .cnt{font-size:12px}
+.optA .sep{height:1px;background:var(--sep);margin:6px 10px}
+/* B — capsule verre épinglée */
+.optB .h{position:sticky;top:0;z-index:2;margin:6px 0 2px;padding:5px 12px;border-radius:999px;color:var(--label);
+  background:rgba(255,255,255,.38);backdrop-filter:blur(14px) saturate(1.9);-webkit-backdrop-filter:blur(14px) saturate(1.9);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 0 0 .5px rgba(255,255,255,.55),0 2px 8px rgba(0,0,0,.12)}
+/* C — actuel */
+.optC .h{position:sticky;top:0;z-index:2;margin-top:4px;border-radius:6px;background:linear-gradient(rgba(0,0,0,.07),rgba(0,0,0,.07)),var(--panel-solid)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .optB .h{background:rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 .5px rgba(255,255,255,.16),0 2px 8px rgba(0,0,0,.4)}
+  :root:not([data-theme="light"]) .optC .h{background:linear-gradient(rgba(255,255,255,.07),rgba(255,255,255,.07)),var(--panel-solid)}}
+:root[data-theme="dark"] .optB .h{background:rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 .5px rgba(255,255,255,.16),0 2px 8px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .optC .h{background:linear-gradient(rgba(255,255,255,.07),rgba(255,255,255,.07)),var(--panel-solid)}
+</style></head>
+<body><div class="doc" style="max-width:1200px">
+<header class="doc-head"><h1>Titres de section — comparaison</h1>
+<p>Même contenu, 3 traitements des titres. Scrolle dans chaque panneau pour voir le comportement épinglé (B, C). Essaie clair / sombre.</p>
+<div class="switch" id="theme"><span class="lbl">Theme</span><button data-t="auto" aria-pressed="true">Auto</button><button data-t="light">Light</button><button data-t="dark">Dark</button></div></header>
+
+<div class="trio">
+  <div class="col optA"><h2>A — Menu extra (recommandé)</h2><p>Comme les menus Wi‑Fi / Bluetooth : pas de fond, titre plus marqué, séparateur fin. Non épinglé.</p>
+    <div class="stage"><section class="panel glass"><div class="scroll" id="a"></div></section></div></div>
+  <div class="col optB"><h2>B — Capsule verre épinglée</h2><p>Liquid Glass (<code>.glassEffect</code>) : la capsule reste en haut et réfracte les lignes qui passent dessous.</p>
+    <div class="stage"><section class="panel glass"><div class="scroll" id="b"></div></section></div></div>
+  <div class="col optC"><h2>C — Actuel</h2><p>Bandeau gris opaque épinglé (pour comparaison).</p>
+    <div class="stage"><section class="panel glass"><div class="scroll" id="c"></div></section></div></div>
+</div>
+<div class="hidden-host"><div id="switch"></div><span id="mbi"></span><div class="stage"><div id="panel"></div></div></div>
+</div>
+<script>// ---- Données fictives réalistes ----
+const ORG = "contoso";
+const STATES = {
+  "Agile:Bug":[["New","Proposed"],["Active","InProgress"],["Resolved","Resolved"],["Closed","Completed"]],
+  "Agile:User Story":[["New","Proposed"],["Active","InProgress"],["Resolved","Resolved"],["Closed","Completed"],["Removed","Removed"]],
+  "Agile:Task":[["New","Proposed"],["Active","InProgress"],["Closed","Completed"],["Removed","Removed"]],
+  "Scrum:Product Backlog Item":[["New","Proposed"],["Approved","Proposed"],["Committed","InProgress"],["Done","Completed"],["Removed","Removed"]],
+  "Scrum:Task":[["To Do","Proposed"],["In Progress","InProgress"],["Done","Completed"],["Removed","Removed"]],
+};
+const HIDDEN = new Set(["Removed","Approved"]); // masqués dans Settings › States (démo)
+// Masquage tags de titre (Settings › Titles, UC12) — démo : P1, Backend, Prod, Customer, Feature masqués
+const TAGS={hideAll:false,hidden:new Set(["p1","backend","prod","customer","feature","mobile"])};
+const norm=t=>t.trim().toLowerCase();
+function cleanTitle(t){
+  const out=t.replace(/\[([^\[\]]+)\]/g,(m,x)=> (TAGS.hideAll||TAGS.hidden.has(norm(x)))?' ':m)
+    .replace(/\s+/g,' ').replace(/^[\s\-:|]+|[\s\-:|]+$/g,'');
+  return out||t;
+}
+function detectTags(titles){ const c={}; titles.forEach(t=>(t.match(/\[([^\[\]]+)\]/g)||[]).forEach(m=>{const k=m.slice(1,-1).trim(); c[k]=(c[k]||0)+1;})); return c; }
+const TYPECOLOR = {"Bug":"var(--t-bug)","User Story":"var(--t-story)","Task":"var(--t-task)","Product Backlog Item":"var(--t-pbi)"};
+const BASE = {
+  toReview:[
+    {title:"[Payments][Backend][P1] Add retry policy to payment gateway client",repo:"payments-api",author:"Sarah Chen",age:"2h",isNew:true},
+    {title:"Migrate build pipeline to .NET 10 and update every NuGet dependency across the solution",repo:"platform-core",author:"Marc Dubois",age:"1d",draft:true},
+    {title:"[Hotfix] Fix null reference in invoice [PDF] export",repo:"billing-web",author:"Priya Natarajan",age:"3d"},
+  ],
+  myPRs:[
+    {title:"[Billing][Feature] CSV export for invoices",repo:"billing-web",age:"5h",votes:{approved:1,suggest:1,wait:1,none:1}},
+    {title:"Refactor auth middleware to use typed options",repo:"platform-core",age:"2d",votes:{approved:2}},
+    {title:"Telemetry sampling (experiment)",repo:"platform-core",age:"6d",draft:true,votes:{rejected:1,none:1}},
+  ],
+  wis:[
+    {id:48213,type:"Bug",proc:"Agile",project:"Billing",title:"[Prod][Auth][P1][Customer] Login fails with SSO when tenant uses a custom domain",state:"Active",isNew:true},
+    {id:48190,type:"User Story",proc:"Agile",project:"Billing",title:"As an accountant I can export invoices to CSV",state:"Resolved"},
+    {id:1207,type:"Product Backlog Item",proc:"Scrum",project:"Mobile",title:"Offline mode for expense capture",state:"Approved"},
+    {id:1311,type:"Task",proc:"Scrum",project:"Mobile",title:"[Mobile] - Write migration for local SQLite schema v4",state:"In Progress"},
+  ],
+};
+function many(){ // gros volume
+  const d=JSON.parse(JSON.stringify(BASE)); const repos=["payments-api","platform-core","billing-web","mobile-app"]; const ppl=["Sarah Chen","Marc Dubois","Priya Natarajan","Tom Becker","Léa Martin"];
+  for(let i=0;i<22;i++) d.toReview.push({title:`Chore: bump dependency group ${i+1} and regenerate lockfiles`,repo:repos[i%4],author:ppl[i%5],age:`${i+4}d`});
+  for(let i=0;i<40;i++) d.wis.push({id:47000+i,type:i%2?"Task":"Bug",proc:"Agile",project:"Billing",title:`Investigate flaky test #${i+1} in reconciliation suite`,state:i%3?"New":"Active"});
+  return d;
+}
+const EMPTY = {toReview:[],myPRs:[],wis:[]};
+
+// ---- Icônes (approx. SF Symbols) ----
+const I = {
+  pr:'<svg class="i" viewBox="0 0 16 16"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="12.5" r="1.6"/><path d="M4 5.1v5.8M12 10.9V6.5a2 2 0 0 0-2-2H7.5M9 3l-1.5 1.5L9 6"/></svg>',
+  refresh:'<svg class="i" viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.8h-2.8"/></svg>',
+  bell:'<svg class="i" viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg>',
+  bellSlash:'<svg class="i" viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 0 1 6.3-3.3M12 7v4l1 1.5H5M6.5 14h3M2.5 2.5l11 11"/></svg>',
+  gear:'<svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/></svg>',
+  warn:'<svg class="i" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13zM8 6.5v3M8 11.6v.1"/></svg>',
+  key:'<svg class="i" viewBox="0 0 16 16"><circle cx="5" cy="8" r="2.8"/><path d="M7.8 8H14M12 8v2.2M10.2 8v1.6"/></svg>',
+  chev:'<svg class="i" viewBox="0 0 16 16" style="width:10px;height:10px"><path d="M4 6l4 4 4-4"/></svg>',
+  chevR:'<svg class="i" viewBox="0 0 16 16" style="width:10px;height:10px"><path d="M6 4l4 4-4 4"/></svg>',
+  ext:'<svg class="i" viewBox="0 0 16 16"><path d="M9 3h4v4M13 3L7 9M11 9.5V13H3V5h3.5"/></svg>',
+  check:'<svg class="i" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>',
+};
+const VOTE = { // icône + couleur + libellé accessible
+  approved:['✓','var(--green)','approved'], suggest:['✓','var(--green)','approved with suggestions'],
+  wait:['⏸','var(--orange)','waiting for author'], rejected:['✕','var(--red)','rejected'], none:['○','var(--label3)','no vote'],
+};
+function votesHTML(v){ return Object.entries(v).map(([k,n])=>`<span title="${n} ${VOTE[k][2]}" aria-label="${n} ${VOTE[k][2]}" style="color:${VOTE[k][1]};font-weight:600">${VOTE[k][0]}${k==='suggest'?'<sup style="font-size:8px">~</sup>':''}${n>1?'<span style="font-size:10px"> '+n+'</span>':''}</span>`).join(' '); }
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function statesFor(w){ return STATES[w.proc+":"+w.type]||[]; }
+function catOf(w){ const s=statesFor(w).find(x=>x[0]===w.state); return s?s[1]:"Proposed"; }
+function menuStates(w){ return statesFor(w).filter(([n])=>n!==w.state && !HIDDEN.has(n)); }
+
+// ---- Icône barre de menus ----
+function menubarIcon(state,count){
+  const glyph=I.pr.replace('class="i"','class="i" style="width:15px;height:15px"');
+  if(state==='unconfigured') return `<span style="opacity:.45">${glyph}</span>`;
+  if(state==='muted') return `${glyph}<span style="margin-left:1px">${I.bellSlash.replace('class="i"','class="i" style="width:11px;height:11px"')}</span>`;
+  if(state==='offline'||state==='auth') return `${glyph}<span style="font-weight:700;font-size:11px;margin-left:1px">!</span>`;
+  if(count) return `${glyph}<span style="font-size:12px;font-weight:600;margin-left:3px">${count}</span>`;
+  return glyph;
+}
+
+// ---- Popup menu générique ----
+let openMenuEl=null;
+function closeMenu(){ if(openMenuEl){openMenuEl.remove(); openMenuEl=null;} }
+function showMenu(anchor,html,{align="left",up=false}={}){
+  closeMenu(); const m=document.createElement('div'); m.className='menu'; m.setAttribute('role','menu'); m.innerHTML=html;
+  const host=anchor.closest('.stage'); host.appendChild(m);
+  const a=anchor.getBoundingClientRect(), h=host.getBoundingClientRect();
+  m.style.top=(up? a.top-h.top-m.offsetHeight-4 : a.bottom-h.top+4)+'px';
+  let left= align==="right"? a.right-h.left-m.offsetWidth : a.left-h.left; m.style.left=Math.max(4,Math.min(left,h.width-m.offsetWidth-4))+'px';
+  openMenuEl=m; m.querySelector('[role=menuitem]:not([aria-disabled=true])')?.focus(); return m;
+}
+document.addEventListener('click',e=>{ if(openMenuEl && !openMenuEl.contains(e.target) && !e.target.closest('[data-menu]')) closeMenu(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeMenu();
+  if(openMenuEl && (e.key==='ArrowDown'||e.key==='ArrowUp')){ e.preventDefault(); const it=[...openMenuEl.querySelectorAll('[role=menuitem]:not([aria-disabled=true])')]; const i=it.indexOf(document.activeElement); it[(i+(e.key==='ArrowDown'?1:-1)+it.length)%it.length]?.focus(); }
+});
+function toast(stage,msg){ const t=document.createElement('div'); t.className='glass'; t.style.cssText='position:absolute;right:12px;bottom:12px;padding:8px 12px;border-radius:10px;font-size:12px;z-index:60'; t.textContent=msg; stage.appendChild(t); setTimeout(()=>t.remove(),1800); }
+
+// ---- Barre de contrôle maquette (état + thème) ----
+const SCENARIOS=[["nominal","Nominal"],["many","Many items"],["empty","Empty"],["loading","First sync"],["offline","Network error"],["auth","PAT expired"],["muted","Muted"],["unconfigured","Not configured"]];
+function buildSwitch(el,onChange){
+  el.innerHTML='<span class="lbl">State</span>'+SCENARIOS.map(([k,l])=>`<button data-k="${k}" aria-pressed="${k==='nominal'}">${l}</button>`).join('')+
+    '<span class="lbl" style="margin-left:12px">Theme</span><button data-t="auto" aria-pressed="true">Auto</button><button data-t="light">Light</button><button data-t="dark">Dark</button>';
+  el.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.k){ el.querySelectorAll('[data-k]').forEach(x=>x.setAttribute('aria-pressed',x===b)); onChange(b.dataset.k); }
+    if(b.dataset.t){ el.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',x===b)); if(b.dataset.t==='auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme=b.dataset.t; }
+  });
+}
+function dataFor(s){ return s==='many'?many(): (s==='empty'||s==='loading'||s==='unconfigured')?EMPTY: JSON.parse(JSON.stringify(BASE)); }
+function prURL(){ return `https://dev.azure.com/${ORG}/…/_git/…/pullrequest/…`; }
+
+function renderLists(){ return ''; } // panneau caché requis par panel.js
+// Panneau popover (options B et C). L'option fournit renderLists(S).
+const S={scenario:"nominal",data:dataFor("nominal"),muted:null,pending:{},errors:{},collapsed:{},tab:"review"};
+const MAX_ROWS=50; // au-delà : lien "Show all in browser"
+
+function prRow(p,kind){
+  const sub = kind==='review' ? `${esc(p.repo)} · ${esc(p.author)} · ${p.age}` : `${esc(p.repo)} · ${p.age} <span style="margin-left:auto;display:inline-flex;gap:5px">${votesHTML(p.votes)}</span>`;
+  return `<button class="row" data-act="open" data-url="PR" title="${esc(p.title)}">
+    ${p.isNew?'<span class="newdot" aria-label="New"></span>':'<span class="nodot"></span>'}
+    <span class="main"><span class="t">${p.draft?'<span class="draft">DRAFT</span>':''}<span class="tt">${esc(cleanTitle(p.title))}</span></span><span class="s">${sub}</span></span></button>`;
+}
+function wiRow(w){
+  const pend=S.pending[w.id], err=S.errors[w.id];
+  return `<div class="rowwrap"><div class="row" role="button" tabindex="0" data-act="open" data-url="WI" title="${esc(w.title)}">
+    ${w.isNew?'<span class="newdot" aria-label="New"></span>':'<span class="nodot"></span>'}
+    <span class="main"><span class="t"><span class="wid">#${w.id}</span><span class="tt">${esc(cleanTitle(w.title))}</span></span>
+      <span class="s"><span class="tdot" style="background:${TYPECOLOR[w.type]}"></span>${esc(w.type)} · ${esc(w.project)}</span></span>
+    <button class="pill" data-act="state" data-id="${w.id}" data-menu aria-haspopup="menu" aria-label="State: ${esc(w.state)}. Change state">
+      ${pend?'<span class="spin"></span>':`<span class="catdot cat-${catOf(w)}"></span>`}${esc(pend||w.state)}${I.chev}</button></div>
+    ${err?`<div class="rowerr" role="alert"><span style="color:var(--red)">${I.warn}</span><span><b>Couldn't change state to ${esc(err.to)}.</b><br>${esc(err.msg)}</span><button class="x" data-act="dismiss" data-id="${w.id}" aria-label="Dismiss">✕</button></div>`:''}</div>`;
+}
+function capped(list,fn,what){ const h=list.slice(0,MAX_ROWS).map(fn).join(''); return list.length>MAX_ROWS? h+`<a class="more" href="#" data-act="open">Show all ${list.length} ${what} in browser…</a>`:h; }
+function skeleton(n){ return Array.from({length:n},()=>`<div class="row" style="cursor:default"><span class="nodot"></span><span class="main"><div class="skel" style="width:75%;margin-bottom:6px"></div><div class="skel" style="width:45%;height:8px"></div></span></div>`).join(''); }
+function emptyText(k){ return {review:"No pull requests waiting for your review.",mine:"You have no active pull requests.",wi:"No open work items assigned to you."}[k]; }
+
+function banner(){
+  if(S.scenario==='offline') return `<div class="banner err" role="status"><span class="bi">${I.warn}</span><span class="bt"><b>Can't reach Azure DevOps</b><span class="small muted-text">Showing data from 14:32. Retrying automatically.</span></span><button class="btn" data-act="refresh">Retry</button></div>`;
+  if(S.scenario==='auth') return `<div class="banner err" role="status"><span class="bi">${I.key}</span><span class="bt"><b>Personal access token expired</b><span class="small muted-text">Showing data from 09:05. Update your token to resume syncing.</span></span><button class="btn" data-act="settings">Update…</button></div>`;
+  if(S.muted) return `<div class="banner mute" role="status"><span class="bi">${I.bellSlash}</span><span class="bt"><b>Notifications muted</b><span class="small muted-text">${S.muted}</span></span><button class="btn" data-act="unmute">Unmute</button></div>`;
+  return '';
+}
+function footer(){
+  const sync = S.scenario==='loading' ? '<span class="spin"></span> Syncing…' : S.scenario==='offline' ? 'Last synced 14:32 · failed 14:40' : S.scenario==='auth'?'Last synced 09:05':'Updated just now';
+  return `<div class="foot"><span class="sync" aria-live="polite">${sync}</span>
+    <button class="ibtn" data-act="refresh" title="Refresh (⌘R)" aria-label="Refresh">${I.refresh}</button>
+    <button class="ibtn" data-act="mute" data-menu aria-haspopup="menu" aria-pressed="${!!S.muted}" title="${S.muted?'Notifications muted':'Mute notifications'}" aria-label="Mute notifications">${S.muted?I.bellSlash:I.bell}</button>
+    <button class="ibtn" data-act="gear" data-menu aria-haspopup="menu" title="More" aria-label="More">${I.gear}</button></div>`;
+}
+function unconfigured(){
+  return `<div class="unconf"><div style="color:var(--label3)">${I.pr.replace('class="i"','class="i" style="width:40px;height:40px;stroke-width:1.1"')}</div>
+    <h2>Not Configured</h2><p class="muted-text" style="margin:0 0 16px">Connect to your Azure DevOps organization to see pull requests and work items.</p>
+    <button class="btn primary" data-act="settings">Set Up…</button></div>
+    <div class="foot"><span class="sync"></span><button class="btn" data-act="quit">Quit</button></div>`;
+}
+function render(){
+  const p=document.getElementById('panel');
+  const cnt = S.data.toReview.length + S.data.wis.filter(w=>w.isNew).length;
+  document.getElementById('mbi').innerHTML = menubarIcon(S.muted?'muted':S.scenario, cnt);
+  if(S.scenario==='unconfigured'){ p.innerHTML=unconfigured(); return; }
+  p.innerHTML = banner() + `<div class="scroll">${renderLists(S)}</div>` + footer();
+}
+
+// ---- Interactions ----
+function stageEl(){return document.querySelector('.stage');}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
+  if(act==='state'){ e.stopPropagation(); const w=S.data.wis.find(x=>x.id==a.dataset.id); const st=menuStates(w);
+    showMenu(a, `<div class="mhead">Move to</div>`+(st.length? st.map(([n,c])=>`<button role="menuitem" data-act="setstate" data-id="${w.id}" data-s="${esc(n)}"><span class="catdot cat-${c}"></span>${esc(n)}</button>`).join('') : `<button role="menuitem" aria-disabled="true">No state available</button>`)
+      +`<hr><button role="menuitem" data-act="open">Open in Browser</button>`,{align:"right"}); return; }
+  if(act==='setstate'){ closeMenu(); const id=+a.dataset.id, to=a.dataset.s; const w=S.data.wis.find(x=>x.id==id); delete S.errors[id]; S.pending[id]=to; render();
+    setTimeout(()=>{ delete S.pending[id];
+      if(w.type==='Bug' && to==='Closed') S.errors[id]={to,msg:"TF401320: Rule Error for field 'Resolved Reason'. Error code: Required, InvalidEmpty."};
+      else { w.state=to; if(catOf(w)==='Completed'||catOf(w)==='Removed') toast(stageEl(),`#${id} moved to ${to} — will leave the list on next refresh`); }
+      render(); },700); return; }
+  if(act==='dismiss'){ delete S.errors[a.dataset.id]; render(); return; }
+  if(act==='open'){ e.preventDefault(); closeMenu(); toast(stageEl(),'Opens in default browser (new tab)'); return; }
+  if(act==='refresh'){ const f=document.querySelector('.foot .sync'); if(f) f.innerHTML='<span class="spin"></span> Syncing…'; setTimeout(render,800); return; }
+  if(act==='mute'){ e.stopPropagation(); if(S.muted){ showMenu(a,`<button role="menuitem" data-act="unmute">Unmute</button>`,{up:true,align:"right"}); return; }
+    showMenu(a,`<div class="mhead">Mute Notifications</div>
+      <button role="menuitem" data-act="domute" data-v="Until 15:42 (1 hour)">For 1 Hour</button>
+      <button role="menuitem" data-act="domute" data-v="Until tomorrow, 9:00">Until Tomorrow, 9:00</button>
+      <button role="menuitem" data-act="mutedate" data-menu>Until Date…</button>
+      <button role="menuitem" data-act="domute" data-v="Until you turn them back on">Until I Turn It Back On</button>`,{up:true,align:"right"}); return; }
+  if(act==='mutedate'){ e.stopPropagation(); const anchor=document.querySelector('[data-act=mute]'); const today=new Date().toISOString().slice(0,10);
+    const m=showMenu(anchor,`<div class="datepop"><label for="md">Mute until</label><input id="md" type="date" min="${today}" value=""> <input id="mt" type="time" value="09:00" aria-label="Time"><div class="err" id="mderr"></div><div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn" data-act="cancel">Cancel</button><button class="btn primary" data-act="mutedateok" data-menu>Mute</button></div></div>`,{up:true,align:"right"}); m.querySelector('#md').focus(); return; }
+  if(act==='mutedateok'){ e.stopPropagation(); const d=document.getElementById('md').value, t=document.getElementById('mt').value; const when=new Date(d+'T'+t);
+    if(!d||when<=new Date()){ document.getElementById('mderr').textContent='Choose a date in the future.'; return; }
+    closeMenu(); S.muted='Until '+when.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+', '+t; render(); return; }
+  if(act==='cancel'){ closeMenu(); return; }
+  if(act==='domute'){ closeMenu(); S.muted=a.dataset.v; render(); return; }
+  if(act==='unmute'){ closeMenu(); S.muted=null; render(); return; }
+  if(act==='gear'){ e.stopPropagation(); showMenu(a,`<button role="menuitem" data-act="settings">Settings…<span class="kbd">⌘,</span></button><hr><button role="menuitem" data-act="quit">Quit ADO Notifier<span class="kbd">⌘Q</span></button>`,{up:true,align:"right"}); return; }
+  if(act==='settings'){ closeMenu(); toast(stageEl(),'Opens Settings window (see shared screens)'); return; }
+  if(act==='quit'){ closeMenu(); toast(stageEl(),'App quits'); return; }
+  if(act==='toggle'){ S.collapsed[a.dataset.k]=!S.collapsed[a.dataset.k]; render(); return; }
+  if(act==='tab'){ S.tab=a.dataset.k; render(); document.querySelector(`[data-act=tab][data-k=${S.tab}]`)?.focus(); return; }
+});
+document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches('.row[role=button]')){ e.preventDefault(); e.target.click(); } });
+buildSwitch(document.getElementById('switch'),k=>{ S.scenario=k; S.data=dataFor(k); S.muted= k==='muted'?'Until Mon, Nov 3, 9:00':null; S.pending={}; S.errors={}; closeMenu(); render(); });
+render();
+
+const D=many(); D.toReview=D.toReview.slice(0,7); D.wis=D.wis.slice(0,10);
+function head(label,n){ return `<button class="h">${I.chev}<span>${label}</span><span class="cnt">${n}</span></button>`; }
+function body(){
+  return [["To Review",D.toReview,p=>prRow(p,'review')],["My PRs",D.myPRs,p=>prRow(p,'mine')],["Work Items",D.wis,wiRow]];
+}
+function draw(id,withSep){
+  document.getElementById(id).innerHTML=body().map(([l,list,fn],i)=>(withSep&&i?'<div class="sep"></div>':'')+`<div class="sec">${head(l,list.length)}${list.map(fn).join('')}</div>`).join('');
+}
+draw('a',true); draw('b',false); draw('c',false);
+document.getElementById('theme').addEventListener('click',e=>{const b=e.target.closest('[data-t]'); if(!b) return;
+  document.querySelectorAll('#theme [data-t]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  if(b.dataset.t==='auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme=b.dataset.t; });
+</script></body></html>

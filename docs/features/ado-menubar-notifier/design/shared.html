@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shared screens</title>
+<style>/* Tokens — approximations macOS 26 system colors / SF Pro (HIG). En SwiftUI : couleurs sémantiques système, pas de valeurs codées. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  --fs-body:13px; --fs-small:11px; --fs-title:15px;
+  --label:rgba(0,0,0,.85); --label2:rgba(0,0,0,.55); --label3:rgba(0,0,0,.3);
+  --sep:rgba(0,0,0,.1); --hover:rgba(0,0,0,.06); --fill:rgba(0,0,0,.05);
+  --accent:#007AFF; --accent-fg:#fff; --red:#FF3B30; --orange:#FF9500; --green:#34C759; --yellow:#FFCC00; --gray:#8E8E93;
+  --panel:rgba(246,246,248,.80); --panel-solid:#f6f6f8; --window:#ececec; --control:#fff;
+  --shadow:0 0 0 .5px rgba(0,0,0,.18),0 12px 40px rgba(0,0,0,.25);
+  --r-panel:16px; --r-row:8px; --r-ctl:6px;
+  --wall:linear-gradient(135deg,#7aa7d8 0%,#b7c9e8 40%,#e9c9b4 100%);
+  --menubar:rgba(255,255,255,.55);
+  --t-bug:#CC293D; --t-story:#009CCC; --t-task:#F2CB1D; --t-pbi:#009CCC; --t-feature:#773B93;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --label:rgba(255,255,255,.88); --label2:rgba(255,255,255,.55); --label3:rgba(255,255,255,.3);
+  --sep:rgba(255,255,255,.12); --hover:rgba(255,255,255,.08); --fill:rgba(255,255,255,.07);
+  --accent:#0A84FF; --red:#FF453A; --orange:#FF9F0A; --green:#30D158; --yellow:#FFD60A; --gray:#98989D;
+  --panel:rgba(38,38,42,.78); --panel-solid:#26262a; --window:#2b2b2e; --control:#3a3a3d;
+  --shadow:0 0 0 .5px rgba(255,255,255,.15),0 12px 40px rgba(0,0,0,.6);
+  --wall:linear-gradient(135deg,#1d2b4a 0%,#2f3550 50%,#4a3040 100%); --menubar:rgba(30,30,30,.5);
+}}
+:root[data-theme="dark"]{
+  --label:rgba(255,255,255,.88); --label2:rgba(255,255,255,.55); --label3:rgba(255,255,255,.3);
+  --sep:rgba(255,255,255,.12); --hover:rgba(255,255,255,.08); --fill:rgba(255,255,255,.07);
+  --accent:#0A84FF; --red:#FF453A; --orange:#FF9F0A; --green:#30D158; --yellow:#FFD60A; --gray:#98989D;
+  --panel:rgba(38,38,42,.78); --panel-solid:#26262a; --window:#2b2b2e; --control:#3a3a3d;
+  --shadow:0 0 0 .5px rgba(255,255,255,.15),0 12px 40px rgba(0,0,0,.6);
+  --wall:linear-gradient(135deg,#1d2b4a 0%,#2f3550 50%,#4a3040 100%); --menubar:rgba(30,30,30,.5);
+}
+*{box-sizing:border-box}
+body{margin:0;font:var(--fs-body)/1.35 var(--font);color:var(--label);background:var(--wall);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:1px;border-radius:5px}
+.doc{max-width:1100px;margin:0 auto;padding:16px}
+.doc-head{background:var(--panel-solid);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px}
+.doc-head h1{font-size:17px;margin:0 0 4px}
+.doc-head p{margin:4px 0;color:var(--label2)}
+.switch{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.switch button{border:0;background:var(--fill);padding:4px 10px;border-radius:999px;cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.switch .lbl{color:var(--label2);align-self:center;margin-right:4px;font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em}
+.menubar{height:26px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;justify-content:flex-end;align-items:center;gap:14px;padding:0 14px;border-radius:8px 8px 0 0;font-size:13px}
+.menubar .mbi{display:inline-flex;align-items:center;justify-content:center;height:22px;min-width:26px;border-radius:5px;padding:0 4px}
+.menubar .mbi.open{background:var(--hover)}
+.stage{position:relative;min-height:640px;border-radius:8px;padding-bottom:24px}
+.glass{background:var(--panel);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);box-shadow:var(--shadow);border-radius:var(--r-panel)}
+.muted-text{color:var(--label2)} .small{font-size:var(--fs-small)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.btn{border:0;border-radius:var(--r-ctl);padding:3px 10px;background:var(--control);box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 1px 1px rgba(0,0,0,.06);cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:none}
+.btn:disabled{opacity:.45;cursor:default}
+.ibtn{border:0;background:transparent;width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--label2)}
+.ibtn:hover{background:var(--hover);color:var(--label)}
+.ibtn[aria-pressed="true"]{color:var(--accent)}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tdot{width:8px;height:8px;border-radius:2px;flex:none}
+.spin{width:12px;height:12px;border:2px solid var(--label3);border-top-color:var(--label);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.skel{background:linear-gradient(90deg,var(--fill),var(--hover),var(--fill));background-size:200% 100%;animation:sk 1.4s infinite;border-radius:4px;height:10px}
+@keyframes sk{to{background-position:-200% 0}}
+.notes{background:var(--panel-solid);border-radius:12px;padding:12px 16px;margin-top:16px;box-shadow:var(--shadow)}
+.notes h2{font-size:14px;margin:4px 0 8px} .notes li{margin:3px 0}
+/* popup menu natif (NSMenu) */
+.menu{position:absolute;z-index:50;min-width:200px;padding:5px;background:var(--panel);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);box-shadow:var(--shadow);border-radius:10px}
+.menu [role=menuitem]{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;padding:3px 10px;border-radius:5px;cursor:default;white-space:nowrap}
+.menu [role=menuitem]:hover,.menu [role=menuitem]:focus{background:var(--accent);color:#fff;outline:none}
+.menu [role=menuitem]:hover .muted-text,.menu [role=menuitem]:focus .muted-text{color:rgba(255,255,255,.8)}
+.menu [role=menuitem][aria-disabled=true]{color:var(--label3);background:none}
+.menu .mhead{padding:3px 10px;color:var(--label2);font-size:var(--fs-small);font-weight:600}
+.menu hr{border:0;border-top:1px solid var(--sep);margin:5px 8px}
+.menu .kbd{margin-left:auto;color:var(--label3);padding-left:20px}
+.catdot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
+.cat-Proposed{background:var(--gray)} .cat-InProgress{background:var(--accent)} .cat-Resolved{background:var(--orange)} .cat-Completed{background:var(--green)} .cat-Removed{background:var(--label3)}
+@media (max-width:700px){.stage{min-height:auto}}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:16px}
+.card{background:var(--panel-solid);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.card h2{font-size:14px;margin:0 0 10px}
+.icons{display:flex;flex-wrap:wrap;gap:10px}
+.icons figure{margin:0;text-align:center;font-size:var(--fs-small);color:var(--label2)}
+.icons .bar{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;background:var(--menubar);color:var(--label);margin-bottom:4px}
+.win{background:var(--window);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;max-width:560px;margin:0 auto}
+.titlebar{height:38px;display:flex;align-items:center;justify-content:center;position:relative;font-weight:600;font-size:13px}
+.lights{position:absolute;left:14px;display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.lights i+i{background:#febc2e}.lights i+i+i{background:#28c840}
+.tabs{display:flex;justify-content:center;gap:4px;padding:0 0 8px}
+.tabs button{border:0;background:none;padding:5px 10px;border-radius:7px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;cursor:pointer;color:var(--label2);min-width:68px}
+.tabs button svg{width:20px;height:20px}
+.tabs button[aria-selected=true]{background:var(--hover);color:var(--accent)}
+.form{padding:16px 20px 20px;background:var(--panel-solid);border-top:1px solid var(--sep)}
+.box{background:var(--control);border-radius:10px;box-shadow:0 0 0 .5px var(--sep);padding:2px 12px;margin-bottom:14px}
+.fr{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--sep);min-height:38px}
+.fr:last-child{border-bottom:0}
+.fr>label,.fr>.k{flex:1}
+.fr input[type=text],.fr input[type=password],.fr input[type=url],.fr select{font:inherit;padding:3px 7px;border-radius:5px;border:1px solid var(--sep);background:var(--control);color:var(--label);width:260px;max-width:100%}
+.fr .help{display:block;font-size:var(--fs-small);color:var(--label2)}
+.gh{font-size:var(--fs-small);font-weight:600;color:var(--label2);margin:0 0 6px 4px}
+.foot2{display:flex;justify-content:flex-end;gap:8px;align-items:center}
+.foot2 .msg{flex:1;font-size:12px}
+.err{color:var(--red)} .ok{color:var(--green)}
+.tog{appearance:none;width:32px;height:18px;border-radius:9px;background:var(--label3);position:relative;cursor:pointer;flex:none;margin:0}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.tog:checked{background:var(--accent)} .tog:checked::after{left:16px}
+.steps{display:flex;gap:6px;justify-content:center;margin-bottom:12px;font-size:var(--fs-small);color:var(--label2)}
+.steps b{color:var(--label)}
+.list{max-height:200px;overflow:auto}
+.notif{display:flex;gap:10px;padding:10px 12px;border-radius:16px;max-width:360px;margin-bottom:10px}
+.notif .ico{width:36px;height:36px;border-radius:9px;background:linear-gradient(160deg,#2b88d8,#0058ad);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.notif .ico svg{width:20px;height:20px}
+.notif .tx{min-width:0;font-size:12px}.notif .tx b{display:block;font-size:13px}
+.notif .when{margin-left:auto;font-size:var(--fs-small);color:var(--label2)}
+table.st{width:100%;border-collapse:collapse} table.st td{padding:5px 0;border-bottom:1px solid var(--sep)} table.st tr:last-child td{border-bottom:0}
+</style></head>
+<body><div class="doc">
+<header class="doc-head"><h1>Shared screens (all options)</h1>
+<p>Icône barre de menus, configuration initiale, fenêtre Settings, notifications. Identiques quelle que soit l'option de panneau retenue.</p>
+<div class="switch" id="switch"></div></header>
+
+<div class="grid">
+<section class="card"><h2>Menu bar icon (template image, monochrome)</h2><div class="icons" id="icons"></div>
+<p class="small muted-text">Activité = PR à relire + WI nouveaux non vus (AC20). Erreur prioritaire sur activité ; muted prioritaire sur tout sauf non configuré.</p></section>
+<section class="card"><h2>System notifications</h2>
+<div class="notif glass"><span class="ico" id="ni1"></span><span class="tx"><b>Review Requested</b>Add retry policy to payment gateway client<br><span class="muted-text">payments-api · by Sarah Chen</span></span><span class="when">now</span></div>
+<div class="notif glass"><span class="ico" id="ni2"></span><span class="tx"><b>Sarah Chen voted Waiting for Author</b>CSV export for invoices</span><span class="when">2m</span></div>
+<div class="notif glass"><span class="ico" id="ni3"></span><span class="tx"><b>Marc Dubois commented</b>CSV export for invoices<br><span class="muted-text">“Can we stream rows instead of buffering the whole file?”</span></span><span class="when">5m</span></div>
+<div class="notif glass"><span class="ico" id="ni4"></span><span class="tx"><b>Work Item Assigned</b>#48213 Login fails with SSO when tenant uses a custom domain</span><span class="when">12m</span></div>
+<div class="notif glass"><span class="ico" id="ni5"></span><span class="tx"><b>Priya Natarajan commented on #48190</b>As an accountant I can export invoices to CSV</span><span class="when">1h</span></div>
+<p class="small muted-text">Titre = événement, corps = élément. Extrait du commentaire si disponible (tronqué 1 ligne). Groupés par élément (thread-identifier). Clic → navigateur.</p></section>
+</div>
+
+<div class="grid">
+<section class="card"><h2>Initial setup (UC1)</h2>
+<div class="win"><div class="titlebar"><span class="lights"><i></i><i></i><i></i></span>Set Up ADO Notifier</div>
+<div class="form" id="setup"></div></div></section>
+
+<section class="card"><h2>Settings window</h2>
+<div class="win"><div class="titlebar"><span class="lights"><i></i><i></i><i></i></span><span id="stitle">General</span></div>
+<div class="tabs" role="tablist" id="stabs"></div><div class="form" id="settings"></div></div></section>
+</div>
+</div>
+<script>// ---- Données fictives réalistes ----
+const ORG = "contoso";
+const STATES = {
+  "Agile:Bug":[["New","Proposed"],["Active","InProgress"],["Resolved","Resolved"],["Closed","Completed"]],
+  "Agile:User Story":[["New","Proposed"],["Active","InProgress"],["Resolved","Resolved"],["Closed","Completed"],["Removed","Removed"]],
+  "Agile:Task":[["New","Proposed"],["Active","InProgress"],["Closed","Completed"],["Removed","Removed"]],
+  "Scrum:Product Backlog Item":[["New","Proposed"],["Approved","Proposed"],["Committed","InProgress"],["Done","Completed"],["Removed","Removed"]],
+  "Scrum:Task":[["To Do","Proposed"],["In Progress","InProgress"],["Done","Completed"],["Removed","Removed"]],
+};
+const HIDDEN = new Set(["Removed","Approved"]); // masqués dans Settings › States (démo)
+// Masquage tags de titre (Settings › Titles, UC12) — démo : P1, Backend, Prod, Customer, Feature masqués
+const TAGS={hideAll:false,hidden:new Set(["p1","backend","prod","customer","feature","mobile"])};
+const norm=t=>t.trim().toLowerCase();
+function cleanTitle(t){
+  const out=t.replace(/\[([^\[\]]+)\]/g,(m,x)=> (TAGS.hideAll||TAGS.hidden.has(norm(x)))?' ':m)
+    .replace(/\s+/g,' ').replace(/^[\s\-:|]+|[\s\-:|]+$/g,'');
+  return out||t;
+}
+function detectTags(titles){ const c={}; titles.forEach(t=>(t.match(/\[([^\[\]]+)\]/g)||[]).forEach(m=>{const k=m.slice(1,-1).trim(); c[k]=(c[k]||0)+1;})); return c; }
+const TYPECOLOR = {"Bug":"var(--t-bug)","User Story":"var(--t-story)","Task":"var(--t-task)","Product Backlog Item":"var(--t-pbi)"};
+const BASE = {
+  toReview:[
+    {title:"[Payments][Backend][P1] Add retry policy to payment gateway client",repo:"payments-api",author:"Sarah Chen",age:"2h",isNew:true},
+    {title:"Migrate build pipeline to .NET 10 and update every NuGet dependency across the solution",repo:"platform-core",author:"Marc Dubois",age:"1d",draft:true},
+    {title:"[Hotfix] Fix null reference in invoice [PDF] export",repo:"billing-web",author:"Priya Natarajan",age:"3d"},
+  ],
+  myPRs:[
+    {title:"[Billing][Feature] CSV export for invoices",repo:"billing-web",age:"5h",votes:{approved:1,suggest:1,wait:1,none:1}},
+    {title:"Refactor auth middleware to use typed options",repo:"platform-core",age:"2d",votes:{approved:2}},
+    {title:"Telemetry sampling (experiment)",repo:"platform-core",age:"6d",draft:true,votes:{rejected:1,none:1}},
+  ],
+  wis:[
+    {id:48213,type:"Bug",proc:"Agile",project:"Billing",title:"[Prod][Auth][P1][Customer] Login fails with SSO when tenant uses a custom domain",state:"Active",isNew:true},
+    {id:48190,type:"User Story",proc:"Agile",project:"Billing",title:"As an accountant I can export invoices to CSV",state:"Resolved"},
+    {id:1207,type:"Product Backlog Item",proc:"Scrum",project:"Mobile",title:"Offline mode for expense capture",state:"Approved"},
+    {id:1311,type:"Task",proc:"Scrum",project:"Mobile",title:"[Mobile] - Write migration for local SQLite schema v4",state:"In Progress"},
+  ],
+};
+function many(){ // gros volume
+  const d=JSON.parse(JSON.stringify(BASE)); const repos=["payments-api","platform-core","billing-web","mobile-app"]; const ppl=["Sarah Chen","Marc Dubois","Priya Natarajan","Tom Becker","Léa Martin"];
+  for(let i=0;i<22;i++) d.toReview.push({title:`Chore: bump dependency group ${i+1} and regenerate lockfiles`,repo:repos[i%4],author:ppl[i%5],age:`${i+4}d`});
+  for(let i=0;i<40;i++) d.wis.push({id:47000+i,type:i%2?"Task":"Bug",proc:"Agile",project:"Billing",title:`Investigate flaky test #${i+1} in reconciliation suite`,state:i%3?"New":"Active"});
+  return d;
+}
+const EMPTY = {toReview:[],myPRs:[],wis:[]};
+
+// ---- Icônes (approx. SF Symbols) ----
+const I = {
+  pr:'<svg class="i" viewBox="0 0 16 16"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="12.5" r="1.6"/><path d="M4 5.1v5.8M12 10.9V6.5a2 2 0 0 0-2-2H7.5M9 3l-1.5 1.5L9 6"/></svg>',
+  refresh:'<svg class="i" viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.8h-2.8"/></svg>',
+  bell:'<svg class="i" viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.5H3zM6.5 14h3"/></svg>',
+  bellSlash:'<svg class="i" viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 0 1 6.3-3.3M12 7v4l1 1.5H5M6.5 14h3M2.5 2.5l11 11"/></svg>',
+  gear:'<svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/></svg>',
+  warn:'<svg class="i" viewBox="0 0 16 16"><path d="M8 2l6.5 11.5h-13zM8 6.5v3M8 11.6v.1"/></svg>',
+  key:'<svg class="i" viewBox="0 0 16 16"><circle cx="5" cy="8" r="2.8"/><path d="M7.8 8H14M12 8v2.2M10.2 8v1.6"/></svg>',
+  chev:'<svg class="i" viewBox="0 0 16 16" style="width:10px;height:10px"><path d="M4 6l4 4 4-4"/></svg>',
+  chevR:'<svg class="i" viewBox="0 0 16 16" style="width:10px;height:10px"><path d="M6 4l4 4-4 4"/></svg>',
+  ext:'<svg class="i" viewBox="0 0 16 16"><path d="M9 3h4v4M13 3L7 9M11 9.5V13H3V5h3.5"/></svg>',
+  check:'<svg class="i" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg>',
+};
+const VOTE = { // icône + couleur + libellé accessible
+  approved:['✓','var(--green)','approved'], suggest:['✓','var(--green)','approved with suggestions'],
+  wait:['⏸','var(--orange)','waiting for author'], rejected:['✕','var(--red)','rejected'], none:['○','var(--label3)','no vote'],
+};
+function votesHTML(v){ return Object.entries(v).map(([k,n])=>`<span title="${n} ${VOTE[k][2]}" aria-label="${n} ${VOTE[k][2]}" style="color:${VOTE[k][1]};font-weight:600">${VOTE[k][0]}${k==='suggest'?'<sup style="font-size:8px">~</sup>':''}${n>1?'<span style="font-size:10px"> '+n+'</span>':''}</span>`).join(' '); }
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function statesFor(w){ return STATES[w.proc+":"+w.type]||[]; }
+function catOf(w){ const s=statesFor(w).find(x=>x[0]===w.state); return s?s[1]:"Proposed"; }
+function menuStates(w){ return statesFor(w).filter(([n])=>n!==w.state && !HIDDEN.has(n)); }
+
+// ---- Icône barre de menus ----
+function menubarIcon(state,count){
+  const glyph=I.pr.replace('class="i"','class="i" style="width:15px;height:15px"');
+  if(state==='unconfigured') return `<span style="opacity:.45">${glyph}</span>`;
+  if(state==='muted') return `${glyph}<span style="margin-left:1px">${I.bellSlash.replace('class="i"','class="i" style="width:11px;height:11px"')}</span>`;
+  if(state==='offline'||state==='auth') return `${glyph}<span style="font-weight:700;font-size:11px;margin-left:1px">!</span>`;
+  if(count) return `${glyph}<span style="font-size:12px;font-weight:600;margin-left:3px">${count}</span>`;
+  return glyph;
+}
+
+// ---- Popup menu générique ----
+let openMenuEl=null;
+function closeMenu(){ if(openMenuEl){openMenuEl.remove(); openMenuEl=null;} }
+function showMenu(anchor,html,{align="left",up=false}={}){
+  closeMenu(); const m=document.createElement('div'); m.className='menu'; m.setAttribute('role','menu'); m.innerHTML=html;
+  const host=anchor.closest('.stage'); host.appendChild(m);
+  const a=anchor.getBoundingClientRect(), h=host.getBoundingClientRect();
+  m.style.top=(up? a.top-h.top-m.offsetHeight-4 : a.bottom-h.top+4)+'px';
+  let left= align==="right"? a.right-h.left-m.offsetWidth : a.left-h.left; m.style.left=Math.max(4,Math.min(left,h.width-m.offsetWidth-4))+'px';
+  openMenuEl=m; m.querySelector('[role=menuitem]:not([aria-disabled=true])')?.focus(); return m;
+}
+document.addEventListener('click',e=>{ if(openMenuEl && !openMenuEl.contains(e.target) && !e.target.closest('[data-menu]')) closeMenu(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeMenu();
+  if(openMenuEl && (e.key==='ArrowDown'||e.key==='ArrowUp')){ e.preventDefault(); const it=[...openMenuEl.querySelectorAll('[role=menuitem]:not([aria-disabled=true])')]; const i=it.indexOf(document.activeElement); it[(i+(e.key==='ArrowDown'?1:-1)+it.length)%it.length]?.focus(); }
+});
+function toast(stage,msg){ const t=document.createElement('div'); t.className='glass'; t.style.cssText='position:absolute;right:12px;bottom:12px;padding:8px 12px;border-radius:10px;font-size:12px;z-index:60'; t.textContent=msg; stage.appendChild(t); setTimeout(()=>t.remove(),1800); }
+
+// ---- Barre de contrôle maquette (état + thème) ----
+const SCENARIOS=[["nominal","Nominal"],["many","Many items"],["empty","Empty"],["loading","First sync"],["offline","Network error"],["auth","PAT expired"],["muted","Muted"],["unconfigured","Not configured"]];
+function buildSwitch(el,onChange){
+  el.innerHTML='<span class="lbl">State</span>'+SCENARIOS.map(([k,l])=>`<button data-k="${k}" aria-pressed="${k==='nominal'}">${l}</button>`).join('')+
+    '<span class="lbl" style="margin-left:12px">Theme</span><button data-t="auto" aria-pressed="true">Auto</button><button data-t="light">Light</button><button data-t="dark">Dark</button>';
+  el.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.k){ el.querySelectorAll('[data-k]').forEach(x=>x.setAttribute('aria-pressed',x===b)); onChange(b.dataset.k); }
+    if(b.dataset.t){ el.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',x===b)); if(b.dataset.t==='auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme=b.dataset.t; }
+  });
+}
+function dataFor(s){ return s==='many'?many(): (s==='empty'||s==='loading'||s==='unconfigured')?EMPTY: JSON.parse(JSON.stringify(BASE)); }
+function prURL(){ return `https://dev.azure.com/${ORG}/…/_git/…/pullrequest/…`; }
+
+document.querySelectorAll('[id^=ni]').forEach(e=>e.innerHTML=I.pr);
+// Icônes
+document.getElementById('icons').innerHTML=[["normal","Normal",0],["activity","Activity",4],["offline","Error / PAT",0],["muted","Muted",0],["unconfigured","Not configured",0]]
+  .map(([s,l,c])=>`<figure><span class="bar">${menubarIcon(s,c)}</span><figcaption>${l}</figcaption></figure>`).join('');
+
+// ---- Setup wizard ----
+const PROJECTS=["Billing","Mobile","Platform","Data Warehouse","Legacy CRM (archived)","Design System","Internal Tools"];
+let step=1, sel=new Set(["Billing","Mobile"]);
+function setup(msg=''){
+  const el=document.getElementById('setup');
+  const steps=`<div class="steps"><span class="${step===1?'':''}">${step===1?'<b>1 Connect</b>':'1 Connect'}</span>›<span>${step===2?'<b>2 Projects</b>':'2 Projects'}</span></div>`;
+  if(step===1) el.innerHTML=steps+`<div class="box">
+    <div class="fr"><label for="org">Organization URL</label><input id="org" type="url" placeholder="https://dev.azure.com/your-org" value="https://dev.azure.com/contoso"></div>
+    <div class="fr"><label for="pat">Personal access token<span class="help">Scopes: Code (Read), Work Items (Read &amp; Write), Project and Team (Read). <a href="#">Create a token…</a></span></label><input id="pat" type="password" placeholder="Paste token"></div></div>
+    <div class="foot2"><span class="msg" id="smsg" role="status">${msg}</span><button class="btn" disabled>Back</button><button class="btn primary" id="connect">Connect</button></div>
+    <p class="small muted-text">Essayer : token vide ou « bad » = erreur, sinon succès.</p>`;
+  else el.innerHTML=steps+`<p class="small" style="margin:0 0 8px">Signed in as <b>Cédric Nanteau</b> · contoso</p>
+    <div class="gh">Projects to follow</div><div class="box list">${PROJECTS.map(p=>`<div class="fr"><label for="p-${p}" class="k">${p}</label><input type="checkbox" id="p-${p}" ${sel.has(p)?'checked':''} data-p="${p}"></div>`).join('')}</div>
+    <div class="box"><div class="fr"><label for="lal">Launch at login</label><input class="tog" type="checkbox" id="lal" checked></div></div>
+    <div class="foot2"><span class="msg err" id="smsg" role="status">${msg}</span><button class="btn" id="back">Back</button><button class="btn primary" id="finish">Finish</button></div>`;
+}
+document.getElementById('setup').addEventListener('click',e=>{
+  if(e.target.id==='connect'){ const v=document.getElementById('pat').value.trim(); const m=document.getElementById('smsg');
+    m.innerHTML='<span class="spin"></span> Checking token…'; e.target.disabled=true;
+    setTimeout(()=>{ if(!v) setup('<span class="err">Enter a personal access token.</span>');
+      else if(v==='bad') setup('<span class="err">Token rejected (401). Check that it hasn\'t expired and has the required scopes.</span>');
+      else { step=2; setup(); } },700); }
+  if(e.target.id==='back'){ step=1; setup(); }
+  if(e.target.dataset.p){ e.target.checked? sel.add(e.target.dataset.p):sel.delete(e.target.dataset.p); }
+  if(e.target.id==='finish'){ if(!sel.size) setup('Select at least one project.'); else { document.getElementById('setup').innerHTML='<p class="ok" style="text-align:center;padding:30px 0">✓ Window closes · first sync starts</p>'; setTimeout(()=>{step=1;setup();},1600);} }
+});
+setup();
+
+// ---- Settings ----
+const TABS={
+  General:'<svg viewBox="0 0 16 16" class="i"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/></svg>',
+  Account:'<svg viewBox="0 0 16 16" class="i"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 14c.6-2.6 2.6-4 5-4s4.4 1.4 5 4"/></svg>',
+  Projects:'<svg viewBox="0 0 16 16" class="i"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M2 6h12"/></svg>',
+  Titles:'<svg viewBox="0 0 16 16" class="i"><path d="M5 3H3v10h2M11 3h2v10h-2M6.5 8h3"/></svg>',
+  States:'<svg viewBox="0 0 16 16" class="i"><circle cx="4" cy="4" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="4" cy="12" r="1.5"/><path d="M7 4h7M7 8h7M7 12h7"/></svg>',
+};
+let tab="General", notifDenied=false;
+const ALLSTATES=[["Active","In Progress"],["Approved","Proposed"],["Closed","Completed"],["Committed","In Progress"],["Done","Completed"],["In Progress","In Progress"],["New","Proposed"],["Removed","Removed"],["Resolved","Resolved"],["To Do","Proposed"]];
+const CATCLS={"Proposed":"Proposed","In Progress":"InProgress","Resolved":"Resolved","Completed":"Completed","Removed":"Removed"};
+function settings(){
+  document.getElementById('stitle').textContent=tab;
+  document.getElementById('stabs').innerHTML=Object.entries(TABS).map(([k,svg])=>`<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${svg}${k}</button>`).join('');
+  const f=document.getElementById('settings');
+  if(tab==='General') f.innerHTML=`<div class="box">
+    <div class="fr"><label for="iv">Refresh every</label><select id="iv" style="width:auto">${[1,2,5,10,15,30].map(n=>`<option ${n===2?'selected':''}>${n} minute${n>1?'s':''}</option>`).join('')}</select></div>
+    <div class="fr"><label for="lal2">Launch at login</label><input class="tog" type="checkbox" id="lal2" checked></div></div>
+    <div class="gh">Panel</div><div class="box">
+    <div class="fr"><label for="pw">Panel width</label><select id="pw" style="width:auto"><option>Standard</option><option selected>Wide</option><option>Extra Wide</option></select></div>
+    <div class="fr"><label for="wt">Wrap titles<span class="help">Show long titles on up to two lines.</span></label><input class="tog" type="checkbox" id="wt"></div>
+    <div class="fr"><label for="hd1">Hide drafts in To Review</label><input class="tog" type="checkbox" id="hd1" checked></div>
+    <div class="fr"><label for="hd2">Hide drafts in My PRs</label><input class="tog" type="checkbox" id="hd2"></div>
+    <div class="fr"><label for="nh">Notify for hidden items<span class="help">Drafts and work items hidden by your filters.</span></label><input class="tog" type="checkbox" id="nh" checked></div></div>
+    <div class="gh">Notifications</div><div class="box"><div class="fr"><span class="k">${notifDenied?`<span class="err">${I.warn}</span> Notifications are turned off for ADO Notifier<span class="help">Allow them in System Settings to get alerts.</span>`:'<span class="ok">●</span> Notifications allowed'}</span>${notifDenied?'<button class="btn">Open System Settings…</button>':''}</div>
+    <div class="fr"><span class="k">Mute</span><span class="muted-text">Not muted · use the bell in the menu</span></div></div>
+    <button class="btn" id="tgN" style="font-size:11px">Demo: toggle permission denied</button>`;
+  if(tab==='Account') f.innerHTML=`<div class="box">
+    <div class="fr"><label for="o2">Organization URL</label><input id="o2" type="url" value="https://dev.azure.com/contoso"></div>
+    <div class="fr"><label for="p2">Personal access token<span class="help">Stored in Keychain. Leave empty to keep the current token.</span></label><input id="p2" type="password" placeholder="••••••••••••"></div>
+    <div class="fr"><span class="k">Signed in as</span><span>Cédric Nanteau</span></div></div>
+    <div class="foot2"><span class="msg" id="amsg" role="status"></span><button class="btn primary" id="save">Save</button></div>`;
+  if(tab==='Projects') f.innerHTML=`<div class="box list">${PROJECTS.map(p=>`<div class="fr"><label class="k" for="q-${p}">${p}${p.startsWith('Legacy')?'<span class="help err">No longer accessible — ignored</span>':''}</label><input type="checkbox" id="q-${p}" ${sel.has(p)||p.startsWith('Legacy')?'checked':''}></div>`).join('')}</div>
+    <p class="small muted-text">At least one project required. Changes apply on next refresh.</p>`;
+  if(tab==='Titles'){
+    const all=[...BASE.toReview,...BASE.myPRs,...BASE.wis].map(x=>x.title); const det=detectTags(all); det["Legacy"]=det["Legacy"]||0; // mémorisé, plus vu
+    const q=(document.getElementById('tq')||{}).value||'';
+    const keys=Object.keys(det).sort((a,b)=>a.localeCompare(b)).filter(k=>k.toLowerCase().includes(q.toLowerCase()));
+    const ex="[Prod][Auth][P1][Customer] Login fails with SSO when tenant uses a custom domain";
+    f.innerHTML=`<p class="small muted-text" style="margin-top:0">Hide [bracketed] tags from pull request and work item titles in the menu and in notifications. Hover a row to see its full title.</p>
+    <div class="box"><div class="fr"><label for="ha">Hide all tags<span class="help">Includes tags not listed yet.</span></label><input class="tog" type="checkbox" id="ha" ${TAGS.hideAll?'checked':''}></div></div>
+    <div class="gh" style="display:flex;align-items:center">Detected tags<input id="tq" type="search" placeholder="Search" value="${esc(q)}" aria-label="Search tags" style="margin-left:auto;font:inherit;font-size:12px;padding:2px 7px;border-radius:6px;border:1px solid var(--sep);background:var(--control);color:var(--label);width:140px"></div>
+    <div class="box list" style="${TAGS.hideAll?'opacity:.45':''}"><table class="st"><tbody>${keys.map(k=>`<tr><td style="width:28px"><input type="checkbox" data-tag="${esc(k)}" id="t-${esc(k)}" ${TAGS.hideAll||TAGS.hidden.has(norm(k))?'checked':''} ${TAGS.hideAll?'disabled':''}></td><td><label for="t-${esc(k)}">[${esc(k)}]</label></td><td class="muted-text small" style="text-align:right">${det[k]?det[k]+' title'+(det[k]>1?'s':''):'Not seen recently'}</td></tr>`).join('')||'<tr><td class="muted-text">No matching tag.</td></tr>'}</tbody></table></div>
+    <div class="gh">Preview</div><div class="box"><div class="fr" style="display:block"><span class="help" style="text-decoration:line-through">${esc(ex)}</span><span>${esc(cleanTitle(ex))}</span></div></div>`;
+    const tq=document.getElementById('tq'); tq.oninput=()=>{const pos=tq.selectionStart; settings(); const n=document.getElementById('tq'); n.focus(); n.setSelectionRange(pos,pos);};
+  }
+  if(tab==='States') f.innerHTML=`<p class="small muted-text" style="margin-top:0"><b>Menu</b>: state offered in status menus. <b>List</b>: work items in this state shown in the panel. A work item's current state is always shown.</p>
+    <div class="box list"><table class="st"><thead><tr><td></td><td class="small muted-text" style="text-align:center;width:90px">Menu<br><button class="btn" style="font-size:10px;padding:0 5px" data-all="m1">All</button> <button class="btn" style="font-size:10px;padding:0 5px" data-all="m0">None</button></td><td class="small muted-text" style="text-align:center;width:90px">List<br><button class="btn" style="font-size:10px;padding:0 5px" data-all="l1">All</button> <button class="btn" style="font-size:10px;padding:0 5px" data-all="l0">None</button></td><td></td></tr></thead><tbody>${ALLSTATES.map(([n,c])=>`<tr><td>${n}</td><td style="text-align:center"><input type="checkbox" class="cm" aria-label="${n} in status menu" ${HIDDEN.has(n)?'':'checked'}></td><td style="text-align:center"><input type="checkbox" class="cl" aria-label="${n} in list" ${n==='Resolved'?'':'checked'}></td><td class="muted-text small" style="text-align:right"><span class="catdot cat-${CATCLS[c]}"></span> ${c}</td></tr>`).join('')}</tbody></table></div>`;
+}
+document.getElementById('stabs').addEventListener('click',e=>{ const b=e.target.closest('[data-tab]'); if(b){ tab=b.dataset.tab; settings(); } });
+document.getElementById('settings').addEventListener('click',e=>{
+  if(e.target.dataset&&e.target.dataset.all){ const k=e.target.dataset.all; document.querySelectorAll(k[0]==='m'?'.cm':'.cl').forEach(c=>c.checked=k[1]==='1'); }
+  if(e.target.id==='ha'){ TAGS.hideAll=e.target.checked; settings(); }
+  if(e.target.dataset&&e.target.dataset.tag){ const k=norm(e.target.dataset.tag); e.target.checked?TAGS.hidden.add(k):TAGS.hidden.delete(k); settings(); }
+  if(e.target.id==='tgN'){ notifDenied=!notifDenied; settings(); }
+  if(e.target.id==='save'){ const m=document.getElementById('amsg'); m.innerHTML='<span class="spin"></span> Checking token…'; setTimeout(()=>m.innerHTML='<span class="ok">✓ Saved</span>',700); }
+});
+settings();
+buildSwitch(document.getElementById('switch'),()=>{});
+document.querySelectorAll('#switch [data-k]').forEach(b=>b.remove()); document.querySelector('#switch .lbl').remove();
+</script></body></html>

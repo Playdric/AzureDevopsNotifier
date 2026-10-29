@@ -1,0 +1,24 @@
+# SwiftPM / build
+.build/
+build/
+.swiftpm/
+*.app
+DerivedData/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets (défensif)
+.env
+.env.*
+*.p12
+*.pem
+*.key
+*.cer
+*.mobileprovision

@@ -1,0 +1,3 @@
+{"count":1,"value":[
+ {"name":"Product Backlog Item","color":"009CCC","states":[{"name":"New","category":"Proposed"},{"name":"Approved","category":"Proposed"},{"name":"Committed","category":"InProgress"},{"name":"Done","category":"Completed"},{"name":"Removed","category":"Removed"}]}
+]}

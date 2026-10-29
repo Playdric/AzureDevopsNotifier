@@ -1,0 +1,4 @@
+{"totalCount":3,"count":2,"comments":[
+ {"workItemId":48213,"id":30,"version":1,"text":"<div>Repro on <b>contoso.fr</b>&nbsp;tenant</div>","createdBy":{"id":"u-priya","displayName":"Priya Natarajan"},"createdDate":"2026-10-28T10:00:00Z"},
+ {"workItemId":48213,"id":29,"version":1,"text":"<p>Looking</p>","createdBy":{"id":"u-me","displayName":"Cédric Nanteau"},"createdDate":"2026-10-28T09:00:00Z"}
+]}

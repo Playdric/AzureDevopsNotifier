@@ -1,0 +1,5 @@
+{"count":3,"value":[
+ {"id":48213,"rev":4,"fields":{"System.Id":48213,"System.Title":"[Prod][Auth] Login fails with SSO","System.WorkItemType":"Bug","System.State":"Active","System.TeamProject":"Billing","System.CommentCount":2}},
+ {"id":1207,"rev":2,"fields":{"System.Id":1207,"System.Title":"Offline mode","System.WorkItemType":"Product Backlog Item","System.State":"Approved","System.TeamProject":"Mobile"}},
+ {"id":999,"rev":9,"fields":{"System.Id":999,"System.Title":"Already done","System.WorkItemType":"Product Backlog Item","System.State":"Done","System.TeamProject":"Mobile","System.CommentCount":0}}
+]}

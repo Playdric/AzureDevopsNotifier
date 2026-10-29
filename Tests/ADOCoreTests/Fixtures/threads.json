@@ -1,0 +1,7 @@
+{"count":2,"value":[
+ {"id":1,"isDeleted":false,"comments":[{"id":1,"parentCommentId":0,"author":{"id":"u-priya","displayName":"Priya Natarajan"},"content":"Can we stream rows?","commentType":"text"},
+   {"id":2,"parentCommentId":1,"author":{"id":"u-me","displayName":"Cédric Nanteau"},"content":"Done","commentType":"text"},
+   {"id":3,"parentCommentId":0,"author":{"id":"u-x","displayName":"X"},"content":"gone","commentType":"text","isDeleted":true}]},
+ {"id":2,"comments":[{"id":1,"parentCommentId":0,"author":{"id":"u-sys","displayName":"Microsoft.VisualStudio.Services.TFS"},"content":"Priya Natarajan voted -5","commentType":"system"}]},
+ {"id":3,"isDeleted":true,"comments":[]}
+]}

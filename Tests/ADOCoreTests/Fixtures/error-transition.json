@@ -1,0 +1,1 @@
+{"$id":"1","innerException":null,"message":"TF401320: Rule Error for field Resolved Reason. Error code: Required, InvalidEmpty.","typeName":"Microsoft.TeamFoundation.WorkItemTracking.Server.RuleValidationException","typeKey":"RuleValidationException","errorCode":0,"eventId":3200}

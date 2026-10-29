@@ -1,0 +1,6 @@
+{"count":1,"value":[
+ {"pullRequestId":103,"title":"Mine and reviewing","status":"active","isDraft":true,"creationDate":"2026-10-26T08:00:00Z",
+  "createdBy":{"id":"u-me","displayName":"Cédric Nanteau"},
+  "repository":{"id":"r2","name":"platform-core","project":{"id":"p1","name":"Billing"}},
+  "reviewers":[{"id":"u-me","displayName":"Cédric Nanteau","vote":0},{"id":"u-priya","displayName":"Priya Natarajan","vote":-5}]}
+]}
