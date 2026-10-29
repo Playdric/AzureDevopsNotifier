@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A8CF0"/>
+      <stop offset="1" stop-color="#0A4FB8"/>
+    </linearGradient>
+    <linearGradient id="dot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF8A3D"/>
+      <stop offset="1" stop-color="#F0441F"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)" filter="url(#shadow)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="4"/>
+  <g fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round">
+    <!-- branche source -->
+    <circle cx="370" cy="330" r="62"/>
+    <line x1="370" y1="392" x2="370" y2="632"/>
+    <circle cx="370" cy="694" r="62"/>
+    <!-- branche cible + flèche -->
+    <circle cx="654" cy="694" r="62"/>
+    <path d="M654 632 V450 a100 100 0 0 0 -100 -100 H500"/>
+    <path d="M562 288 L500 350 L562 412"/>
+  </g>
+  <circle cx="790" cy="234" r="92" fill="url(#dot)" stroke="#fff" stroke-width="20"/>
+</svg>
