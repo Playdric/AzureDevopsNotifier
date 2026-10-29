@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  dmg:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tag matches Info.plist
+        run: |
+          VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' Resources/Info.plist)"
+          [[ "v$VERSION" == "$GITHUB_REF_NAME" ]] || { echo "Tag $GITHUB_REF_NAME != v$VERSION"; exit 1; }
+      - run: swift test --skip KeychainStoreTests
+      - run: scripts/dmg.sh --publish
+        env:
+          GH_TOKEN: ${{ github.token }}

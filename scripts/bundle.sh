@@ -1,11 +1,12 @@
 #!/bin/zsh
-# Build release + assemble build/ADO Notifier.app + codesign.
+# Build release universel (arm64 + x86_64) + assemble build/ADO Notifier.app + codesign.
 # CODESIGN_IDENTITY : certificat stable (voir README), sinon signature ad-hoc.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/ADONotifier"
+ARCHS=(--arch arm64 --arch x86_64)
+swift build -c release "${ARCHS[@]}"
+BIN="$(swift build -c release "${ARCHS[@]}" --show-bin-path)/ADONotifier"
 APP="build/ADO Notifier.app"
 
 rm -rf "$APP"

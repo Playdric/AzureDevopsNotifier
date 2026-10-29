@@ -4,11 +4,23 @@ App macOS barre de menus (usage perso) : PRs à relire, mes PRs, work items assi
 
 Specs : `docs/features/ado-menubar-notifier/` (refinement, design, plan).
 
-## Prérequis
+## Installation
+1. Télécharger `ADO-Notifier-<version>.dmg` depuis les [Releases](https://github.com/Playdric/AzureDevopsNotifier/releases).
+2. Ouvrir le dmg, glisser **ADO Notifier** dans **Applications**.
+3. Premier lancement : l'app n'est pas notarisée par Apple, macOS la bloque. Réglages Système › Confidentialité et sécurité › **Ouvrir quand même**. Ou :
+   ```sh
+   xattr -dr com.apple.quarantine "/Applications/ADO Notifier.app"
+   ```
+
+Requiert macOS 26+ (Apple Silicon ou Intel).
+
+## Développement
+
+### Prérequis
 - macOS 26+, Xcode 27 / Swift 6.
 - PAT Azure DevOps avec les scopes : **Code (Read)**, **Work Items (Read & Write)**, **Project and Team (Read)**.
 
-## Commandes
+### Commandes
 ```sh
 swift test                                        # tests
 swift test --skip KeychainStoreTests              # sans le trousseau (session verrouillée / CI)
@@ -16,7 +28,15 @@ xcrun swift-format lint --strict -r Sources Tests # lint
 swift build                                       # build debug
 scripts/bundle.sh                                 # build/ADO Notifier.app signé
 scripts/install.sh                                # copie dans ~/Applications
+scripts/dmg.sh                                    # build/ADO-Notifier-<version>.dmg
 ```
+
+### Publier une release
+Version lue dans `Resources/Info.plist` (`CFBundleShortVersionString`, à incrémenter avec `CFBundleVersion`).
+```sh
+scripts/dmg.sh --publish                          # dmg + release GitHub v<version>
+```
+Ou pousser un tag `v<version>` : le workflow `.github/workflows/release.yml` build et publie le dmg.
 Lancer l'app via le bundle (`open "build/ADO Notifier.app"`) : notifications, Keychain et Launch at login exigent un `.app`.
 
 ## PAT et Keychain
