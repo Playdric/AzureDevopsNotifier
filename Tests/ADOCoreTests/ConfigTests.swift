@@ -86,6 +86,7 @@ struct PreferencesTests {
         #expect(prefs.listHiddenStates.isEmpty)
         #expect(!prefs.hideDraftsToReview && !prefs.hideDraftsMine && !prefs.wrapTitles)
         #expect(prefs.notifyHiddenItems)  // AC49
+        #expect(prefs.notifyCIFailures && prefs.notifyReadyToMerge)
     }
 
     @Test func panelOptionsRoundTrip() {

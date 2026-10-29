@@ -30,7 +30,10 @@ struct ProjectDTO: Decodable {
 
 struct PullRequestDTO: Decodable {
     struct Repository: Decodable {
-        struct ProjectRef: Decodable { var name: String }
+        struct ProjectRef: Decodable {
+            var id: String
+            var name: String
+        }
         var id: String
         var name: String
         var project: ProjectRef
@@ -49,15 +52,73 @@ struct PullRequestDTO: Decodable {
     var createdBy: IdentityDTO
     var repository: Repository
     var reviewers: [ReviewerDTO]?
+    var mergeStatus: String?
 
     var model: PullRequest {
         PullRequest(
-            id: pullRequestId, title: title, projectName: repository.project.name, repositoryName: repository.name,
-            author: createdBy.model, creationDate: creationDate, isDraft: isDraft ?? false,
+            id: pullRequestId, title: title, projectID: repository.project.id, projectName: repository.project.name,
+            repositoryName: repository.name, author: createdBy.model, creationDate: creationDate,
+            isDraft: isDraft ?? false,
             reviewers: (reviewers ?? []).map {
                 Reviewer(
                     identity: Identity(id: $0.id, displayName: $0.displayName), vote: Vote(rawValue: $0.vote) ?? .none,
                     isContainer: $0.isContainer ?? false)
+            }, hasMergeConflict: mergeStatus == "conflicts" || mergeStatus == "failure")
+    }
+}
+
+struct PolicyEvaluationDTO: Decodable {
+    struct Configuration: Decodable {
+        struct TypeRef: Decodable { var id: String }
+        struct Settings: Decodable { var displayName: String? }
+        var id: Int
+        var isEnabled: Bool?
+        var isBlocking: Bool?
+        var type: TypeRef
+        var settings: Settings?
+    }
+    struct Context: Decodable {
+        var buildId: Int?
+        var isExpired: Bool?
+        var buildDefinitionName: String?
+    }
+
+    static let buildValidationType = "0609b952-1397-4640-95ec-e00a01b2c241"
+    /// Évaluée sur la stratégie choisie à la complétion : `rejected` tant que la PR n'est pas complétée.
+    static let mergeStrategyType = "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"
+
+    var status: String
+    var configuration: Configuration
+    var context: Context?
+
+    var isActive: Bool { configuration.isEnabled != false && status != "notApplicable" }
+
+    /// Pipeline de build validation applicable ; `nil` pour les autres policies.
+    var pipeline: PipelineCheck? {
+        guard isActive, configuration.type.id.lowercased() == Self.buildValidationType else { return nil }
+        let pipelineStatus: PipelineStatus =
+            switch status {
+            case "approved": .passed
+            case "rejected", "broken": .failed
+            case "running": .running
+            default: context?.isExpired == true ? .expired : .queued
+            }
+        let name = [configuration.settings?.displayName, context?.buildDefinitionName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty }
+        return PipelineCheck(
+            id: configuration.id, name: name ?? "Build", status: pipelineStatus,
+            isRequired: configuration.isBlocking ?? false, buildID: context?.buildId)
+    }
+}
+
+extension [PolicyEvaluationDTO] {
+    var model: PRChecks {
+        PRChecks(
+            pipelines: compactMap(\.pipeline),
+            blockingSatisfied: allSatisfy {
+                !$0.isActive || $0.configuration.isBlocking != true
+                    || $0.configuration.type.id.lowercased() == PolicyEvaluationDTO.mergeStrategyType
+                    || $0.status == "approved"
             })
     }
 }

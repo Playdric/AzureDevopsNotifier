@@ -53,25 +53,82 @@ public struct Reviewer: Codable, Hashable, Sendable {
 public struct PullRequest: Codable, Hashable, Sendable, Identifiable {
     public var id: Int
     public var title: String
+    public var projectID: String
     public var projectName: String
     public var repositoryName: String
     public var author: Identity
     public var creationDate: Date
     public var isDraft: Bool
     public var reviewers: [Reviewer]
+    /// Conflit ou échec de fusion : ADO bloque la complétion.
+    public var hasMergeConflict: Bool
 
     public init(
-        id: Int, title: String, projectName: String, repositoryName: String, author: Identity,
-        creationDate: Date, isDraft: Bool = false, reviewers: [Reviewer] = []
+        id: Int, title: String, projectID: String = "", projectName: String, repositoryName: String,
+        author: Identity, creationDate: Date, isDraft: Bool = false, reviewers: [Reviewer] = [],
+        hasMergeConflict: Bool = false
     ) {
         self.id = id
         self.title = title
+        self.projectID = projectID
         self.projectName = projectName
         self.repositoryName = repositoryName
         self.author = author
         self.creationDate = creationDate
         self.isDraft = isDraft
         self.reviewers = reviewers
+        self.hasMergeConflict = hasMergeConflict
+    }
+
+    /// Prête à merger : publiée, sans conflit, toutes les policies bloquantes approuvées.
+    public func isReady(_ checks: PRChecks?) -> Bool {
+        !isDraft && !hasMergeConflict && checks?.blockingSatisfied == true
+    }
+}
+
+public enum PipelineStatus: String, Codable, Hashable, Sendable {
+    case queued, running, expired, passed, failed
+
+    public var isPending: Bool { self == .queued || self == .running || self == .expired }
+
+    public var label: String {
+        switch self {
+        case .queued: "Queued"
+        case .running: "Running"
+        case .expired: "Expired — re-queue needed"
+        case .passed: "Succeeded"
+        case .failed: "Failed"
+        }
+    }
+}
+
+/// Évaluation d'une policy *Build validation* sur une PR.
+public struct PipelineCheck: Codable, Hashable, Sendable, Identifiable {
+    /// Id de la configuration de policy : stable d'un build à l'autre.
+    public var id: Int
+    public var name: String
+    public var status: PipelineStatus
+    public var isRequired: Bool
+    public var buildID: Int?
+
+    public init(id: Int, name: String, status: PipelineStatus, isRequired: Bool = true, buildID: Int? = nil) {
+        self.id = id
+        self.name = name
+        self.status = status
+        self.isRequired = isRequired
+        self.buildID = buildID
+    }
+}
+
+public struct PRChecks: Codable, Hashable, Sendable {
+    /// Ordre renvoyé par ADO.
+    public var pipelines: [PipelineCheck]
+    /// Toutes les policies bloquantes approuvées (builds, reviewers, WI liés, commentaires…).
+    public var blockingSatisfied: Bool
+
+    public init(pipelines: [PipelineCheck], blockingSatisfied: Bool) {
+        self.pipelines = pipelines
+        self.blockingSatisfied = blockingSatisfied
     }
 }
 
@@ -170,6 +227,8 @@ public struct Snapshot: Codable, Hashable, Sendable {
     /// Threads de mes PRs, par id de PR.
     public var threads: [Int: [PRThread]]
     public var workItems: [WorkItem]
+    /// Policies des PRs (To Review et My PRs), par id de PR. Absente : inconnue (erreur API).
+    public var checks: [Int: PRChecks]
     /// Derniers commentaires (récents d'abord) des WI dont le compteur a augmenté.
     public var workItemComments: [Int: [Comment]]
     public var types: TypeCatalog
@@ -178,13 +237,15 @@ public struct Snapshot: Codable, Hashable, Sendable {
 
     public init(
         me: Identity, toReview: [PullRequest] = [], myPRs: [PullRequest] = [], threads: [Int: [PRThread]] = [:],
-        workItems: [WorkItem] = [], workItemComments: [Int: [Comment]] = [:], types: TypeCatalog = [:],
+        checks: [Int: PRChecks] = [:], workItems: [WorkItem] = [], workItemComments: [Int: [Comment]] = [:],
+        types: TypeCatalog = [:],
         inaccessibleProjects: [String] = [], fetchedAt: Date
     ) {
         self.me = me
         self.toReview = toReview
         self.myPRs = myPRs
         self.threads = threads
+        self.checks = checks
         self.workItems = workItems
         self.workItemComments = workItemComments
         self.types = types

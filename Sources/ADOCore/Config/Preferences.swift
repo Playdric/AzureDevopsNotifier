@@ -42,6 +42,10 @@ public struct Preferences: Codable, Hashable, Sendable {
     public var wrapTitles = false
     /// Notifier les éléments masqués par les filtres d'affichage (UC14).
     public var notifyHiddenItems = true
+    /// Échec d'un pipeline sur une de mes PRs.
+    public var notifyCIFailures = true
+    /// Une de mes PRs devient prête à merger.
+    public var notifyReadyToMerge = true
 
     public init() {}
 
@@ -64,6 +68,8 @@ public struct Preferences: Codable, Hashable, Sendable {
         panelWidth = try c.decodeIfPresent(PanelWidth.self, forKey: .panelWidth) ?? d.panelWidth
         wrapTitles = try c.decodeIfPresent(Bool.self, forKey: .wrapTitles) ?? d.wrapTitles
         notifyHiddenItems = try c.decodeIfPresent(Bool.self, forKey: .notifyHiddenItems) ?? d.notifyHiddenItems
+        notifyCIFailures = try c.decodeIfPresent(Bool.self, forKey: .notifyCIFailures) ?? d.notifyCIFailures
+        notifyReadyToMerge = try c.decodeIfPresent(Bool.self, forKey: .notifyReadyToMerge) ?? d.notifyReadyToMerge
     }
 
     public var isConfigured: Bool { orgURL != nil && me != nil && !projects.isEmpty }

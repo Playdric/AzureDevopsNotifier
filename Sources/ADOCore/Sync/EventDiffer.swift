@@ -6,6 +6,8 @@ public enum NotifiableEvent: Hashable, Sendable {
     case prComment(PullRequest, author: Identity, text: String, isReply: Bool)
     case prVote(PullRequest, reviewer: Identity, vote: Vote)
     case workItemComment(WorkItem, author: Identity, text: String)
+    case ciFailed(PullRequest, pipeline: String, isOptional: Bool)
+    case readyToMerge(PullRequest)
 }
 
 public enum EventDiffer {
@@ -37,6 +39,7 @@ public enum EventDiffer {
             guard let previous = oldMine[pr.id] else { continue }
             events += votes(old: previous, new: pr, me: me)
             events += comments(old: old.threads[pr.id] ?? [], new: new.threads[pr.id] ?? [], pr: pr, me: me)
+            events += checks(old: previous, new: pr, before: old.checks[pr.id], after: new.checks[pr.id])
         }
         return events
     }
@@ -63,6 +66,22 @@ public enum EventDiffer {
                 events.append(.prComment(pr, author: comment.author, text: comment.text, isReply: isReply))
             }
         }
+        return events
+    }
+
+    /// Statut inconnu d'un côté (erreur API) : rien, pour ne pas notifier à tort (AC16).
+    private static func checks(old: PullRequest, new: PullRequest, before: PRChecks?, after: PRChecks?)
+        -> [NotifiableEvent]
+    {
+        guard let before, let after else { return [] }
+        let previous = Dictionary(before.pipelines.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        var events: [NotifiableEvent] = after.pipelines.compactMap { pipeline in
+            guard pipeline.status == .failed else { return nil }
+            // Même build toujours en échec : déjà notifié. Nouveau build en échec : relance ratée.
+            if let was = previous[pipeline.id], was.status == .failed, was.buildID == pipeline.buildID { return nil }
+            return .ciFailed(new, pipeline: pipeline.name, isOptional: !pipeline.isRequired)
+        }
+        if new.isReady(after) && !old.isReady(before) { events.append(.readyToMerge(new)) }
         return events
     }
 }

@@ -37,7 +37,48 @@ public struct PRRow: Equatable, Sendable, Identifiable {
     public var isDraft: Bool
     public var isNew: Bool
     public var votes: [VoteCount]
+    /// Pipelines de build validation, ordre ADO ; vide si aucun ou statut inconnu.
+    public var pipelines: [PipelineCheck] = []
+    /// My PRs uniquement (UC5).
+    public var isReady = false
     public var url: URL
+}
+
+extension PRRow {
+    private enum CIState { case failed, optionalFailed, pending, passed }
+
+    private var ciState: CIState? {
+        guard !pipelines.isEmpty else { return nil }
+        let failed = pipelines.filter { $0.status == .failed }
+        let pending = pipelines.contains { $0.status.isPending }
+        if failed.contains(where: \.isRequired) { return .failed }
+        if !failed.isEmpty && !pending { return .optionalFailed }
+        return pending ? .pending : .passed
+    }
+
+    /// En-tête du détail CI (popover au survol des pastilles).
+    public var ciHeader: String? {
+        guard let state = ciState else { return nil }
+        let total = pipelines.count
+        return switch state {
+        case .failed: "CI · \(pipelines.count { $0.status == .failed }) of \(total) failed"
+        case .optionalFailed: "CI · optional pipeline failed"
+        case .pending: "CI · \(pipelines.count { $0.status.isPending }) of \(total) pending"
+        case .passed: "CI · all \(total) succeeded"
+        }
+    }
+
+    public var ciAccessibilityLabel: String? {
+        guard let state = ciState else { return nil }
+        let label =
+            switch state {
+            case .failed: "CI: \(pipelines.count { $0.status == .failed }) of \(pipelines.count) failed"
+            case .optionalFailed: "CI: optional pipeline failed"
+            case .pending: "CI: running"
+            case .passed: "CI: succeeded"
+            }
+        return label + (isReady ? ", ready to merge" : "")
+    }
 }
 
 public struct WIRow: Equatable, Sendable, Identifiable {
@@ -92,7 +133,8 @@ public struct PanelState: Equatable, Sendable {
         guard prefs.isConfigured, let org = prefs.orgURL else { return empty }
         let links = WebLinks(org: org)
 
-        func prRow(_ pr: PullRequest) -> PRRow {
+        func prRow(_ pr: PullRequest, mine: Bool) -> PRRow {
+            let checks = snapshot?.checks[pr.id]
             let counts = Dictionary(grouping: pr.reviewers.filter { $0.identity.id != prefs.me?.id }, by: \.vote)
             let votes = Vote.allCases.compactMap { vote in
                 counts[vote].map { VoteCount(vote: vote, count: $0.count) }
@@ -101,6 +143,7 @@ public struct PanelState: Equatable, Sendable {
                 id: pr.id, title: TitleCleaner.clean(pr.title, settings: prefs.tags), originalTitle: pr.title,
                 repository: pr.repositoryName, author: pr.author.displayName, created: pr.creationDate,
                 isDraft: pr.isDraft, isNew: !seen.contains(seenKey(pr: pr.id)), votes: votes,
+                pipelines: checks?.pipelines ?? [], isReady: mine && pr.isReady(checks),
                 url: links.pullRequest(pr))
         }
         func wiRow(_ wi: WorkItem, types: TypeCatalog) -> WIRow {
@@ -127,8 +170,10 @@ public struct PanelState: Equatable, Sendable {
         let visibleMine = allMine.filter { !display.hides(mine: $0) }
         let visibleWIs = allWIs.filter { !display.hides($0) }
 
-        let toReview = section(allReview, visible: visibleReview, overflow: links.allPullRequests, prRow)
-        let myPRs = section(allMine, visible: visibleMine, overflow: links.allPullRequests, prRow)
+        let toReview = section(allReview, visible: visibleReview, overflow: links.allPullRequests) {
+            prRow($0, mine: false)
+        }
+        let myPRs = section(allMine, visible: visibleMine, overflow: links.allPullRequests) { prRow($0, mine: true) }
         let workItems = section(
             allWIs, visible: visibleWIs,
             overflow: links.assignedWorkItems(project: prefs.projects.first?.name ?? "")

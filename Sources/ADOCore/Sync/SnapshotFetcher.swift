@@ -1,7 +1,10 @@
 import Foundation
+import os
 
 /// Assemble un `Snapshot` pour les projets suivis.
 public struct SnapshotFetcher: Sendable {
+    private static let log = Logger(subsystem: KeychainStore.defaultService, category: "sync")
+
     public let client: ADOClient
     public let me: Identity
     public let projects: [String]
@@ -49,6 +52,21 @@ public struct SnapshotFetcher: Sendable {
                 project: pr.projectName, repository: pr.repositoryName, pullRequestID: pr.id)
         }
 
+        // Best effort : une erreur garde le dernier état connu (sinon un échec survenu pendant le trou
+        // ne serait jamais notifié), le sync continue (AC16).
+        var checks: [Int: PRChecks] = [:]
+        for pr in toReview + myPRs where checks[pr.id] == nil {
+            do {
+                checks[pr.id] = try await client.prChecks(
+                    projectID: pr.projectID, projectName: pr.projectName, pullRequestID: pr.id)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                Self.log.debug("Policies of PR \(pr.id, privacy: .public) unavailable: \(String(describing: error))")
+                checks[pr.id] = previous?.checks[pr.id]
+            }
+        }
+
         let accessible = projects.filter { !inaccessible.contains($0) }
         let ids = try await client.assignedWorkItemIDs(
             projects: accessible, excludedStates: StateMenu.closedEverywhere(types))
@@ -63,7 +81,7 @@ public struct SnapshotFetcher: Sendable {
         }
 
         return Snapshot(
-            me: me, toReview: toReview, myPRs: myPRs, threads: threads, workItems: workItems,
+            me: me, toReview: toReview, myPRs: myPRs, threads: threads, checks: checks, workItems: workItems,
             workItemComments: comments, types: types, inaccessibleProjects: inaccessible.sorted(), fetchedAt: now)
     }
 }

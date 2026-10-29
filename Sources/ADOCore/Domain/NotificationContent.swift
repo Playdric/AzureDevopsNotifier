@@ -40,6 +40,14 @@ public struct NotificationContent: Equatable, Sendable {
             return NotificationContent(
                 title: "\(author.displayName) commented on #\(wi.id)", subtitle: excerpt(text), body: clean(wi.title),
                 url: links.workItem(wi), threadID: "wi-\(wi.id)")
+        case .ciFailed(let pr, let pipeline, let isOptional):
+            return NotificationContent(
+                title: "CI Failed", subtitle: isOptional ? "\(pipeline) · optional" : pipeline, body: clean(pr.title),
+                url: links.pullRequest(pr), threadID: "pr-\(pr.id)")
+        case .readyToMerge(let pr):
+            return NotificationContent(
+                title: "Ready to Merge", subtitle: pr.repositoryName, body: clean(pr.title),
+                url: links.pullRequest(pr), threadID: "pr-\(pr.id)")
         }
     }
 }

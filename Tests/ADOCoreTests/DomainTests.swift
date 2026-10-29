@@ -221,6 +221,7 @@ struct NotificationGateTests {
             .prVote(draft(2, author: me), reviewer: priya, vote: .approved),
             .workItemAssigned(wi(3, state: "Resolved")),
             .workItemComment(wi(3, state: "Resolved"), author: priya, text: "c"),
+            .ciFailed(draft(2, author: me), pipeline: "Build", isOptional: false),
         ]
     }
 
@@ -248,6 +249,22 @@ struct NotificationGateTests {
     @Test func draftsNotifiedWhenDraftFiltersOff() {
         let p = prefs(notify: false, draftsReview: false, draftsMine: false, states: [])
         #expect(NotificationGate.filter(hiddenEvents, prefs: p, now: t0) == hiddenEvents)
+    }
+
+    // AC15
+    @Test func ciTogglesDropOnlyTheirEvents() {
+        let failed = NotifiableEvent.ciFailed(pr(5, author: me), pipeline: "Build", isOptional: false)
+        let ready = NotifiableEvent.readyToMerge(pr(5, author: me))
+        let events = visibleEvents + [failed, ready]
+        var p = prefs(notify: true)
+        #expect(NotificationGate.filter(events, prefs: p, now: t0) == events)
+        p.notifyCIFailures = false
+        #expect(NotificationGate.filter(events, prefs: p, now: t0) == visibleEvents + [ready])
+        p.notifyCIFailures = true
+        p.notifyReadyToMerge = false
+        #expect(NotificationGate.filter(events, prefs: p, now: t0) == visibleEvents + [failed])
+        p.mute = .indefinitely
+        #expect(NotificationGate.filter(events, prefs: p, now: t0).isEmpty)
     }
 
     @Test func muteStillWins() {

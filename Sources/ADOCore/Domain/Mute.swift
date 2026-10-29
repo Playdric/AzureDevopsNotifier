@@ -49,9 +49,15 @@ public enum NotificationGate {
         mute.isActive(at: now) ? [] : events
     }
 
-    /// Sourdine, puis éléments masqués si « Notify for hidden items » est désactivé (UC14).
+    /// Sourdine, réglages CI, puis éléments masqués si « Notify for hidden items » est désactivé (UC14).
     public static func filter(_ events: [NotifiableEvent], prefs: Preferences, now: Date) -> [NotifiableEvent] {
-        let audible = filter(events, mute: prefs.mute, now: now)
+        let audible = filter(events, mute: prefs.mute, now: now).filter { event in
+            switch event {
+            case .ciFailed: prefs.notifyCIFailures
+            case .readyToMerge: prefs.notifyReadyToMerge
+            default: true
+            }
+        }
         guard !prefs.notifyHiddenItems else { return audible }
         let display = DisplayFilter(prefs: prefs)
         return audible.filter { !display.hides($0) }

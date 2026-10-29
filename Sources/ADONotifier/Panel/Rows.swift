@@ -50,6 +50,102 @@ struct DraftBadge: View {
     }
 }
 
+struct ReadyBadge: View {
+    var body: some View {
+        Text("READY")
+            .font(.system(size: 9, weight: .semibold))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(.green.opacity(0.18), in: .rect(cornerRadius: 4))
+            .foregroundStyle(.green)
+            .accessibilityLabel("Ready to merge")
+    }
+}
+
+/// Une pastille par pipeline de build validation, ordre ADO. Détail en popover au survol.
+struct CIDots: View {
+    static let maxDots = 6
+    /// Popover plutôt que `.help` : délai maîtrisé, pastilles colorées dans le détail.
+    static let hoverDelay = Duration.milliseconds(300)
+    let row: PRRow
+    @State private var hovering = false
+    @State private var showsDetail = false
+
+    var body: some View {
+        if let label = row.ciAccessibilityLabel {
+            HStack(spacing: 3) {
+                ForEach(row.pipelines.prefix(Self.maxDots)) { pipeline in
+                    PipelineDot(pipeline: pipeline)
+                }
+                if row.pipelines.count > Self.maxDots {
+                    Text("+\(row.pipelines.count - Self.maxDots)").font(.system(size: 10))
+                }
+            }
+            .padding(.vertical, 3)
+            .contentShape(.rect)
+            .onHover { hovering = $0 }
+            .task(id: hovering) {
+                guard hovering else {
+                    showsDetail = false
+                    return
+                }
+                try? await Task.sleep(for: Self.hoverDelay)
+                if !Task.isCancelled { showsDetail = true }
+            }
+            .popover(isPresented: $showsDetail, arrowEdge: .bottom) { CIDetail(row: row) }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(label)
+        }
+    }
+}
+
+struct PipelineDot: View {
+    let pipeline: PipelineCheck
+
+    var body: some View {
+        Group {
+            switch pipeline.status {
+            case .failed: Circle().fill(.red)
+            case .passed: Circle().fill(.green)
+            case .running: Circle().strokeBorder(Color.accentColor, lineWidth: 1.5)
+            case .queued, .expired: Circle().strokeBorder(.tertiary, lineWidth: 1.5)
+            }
+        }
+        .frame(width: 7, height: 7)
+        .opacity(pipeline.isRequired ? 1 : 0.45)
+    }
+}
+
+struct CIDetail: View {
+    let row: PRRow
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            if let header = row.ciHeader {
+                Text(header).fontWeight(.semibold)
+            }
+            Grid(alignment: .leading, horizontalSpacing: 6, verticalSpacing: 4) {
+                ForEach(row.pipelines) { pipeline in
+                    GridRow {
+                        PipelineDot(pipeline: pipeline)
+                        HStack(spacing: 4) {
+                            Text(pipeline.name)
+                            if !pipeline.isRequired { Text("optional").foregroundStyle(.secondary) }
+                        }
+                        Text(pipeline.status.label).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if row.isReady {
+                Label("Ready to merge", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            }
+        }
+        .font(.caption)
+        .padding(10)
+        .fixedSize()
+    }
+}
+
 struct VoteSummary: View {
     let votes: [VoteCount]
 
@@ -115,17 +211,25 @@ struct PRRowView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         if row.isDraft { DraftBadge() }
+                        if row.isReady { ReadyBadge() }
+                        // Sur le titre seul : pas sur toute la ligne (pastilles CI, votes).
                         Text(row.title).lineLimit(model.prefs.wrapTitles ? 2 : 1).truncationMode(.tail)
+                            .help(row.originalTitle)
                     }
                     HStack(spacing: 4) {
                         switch kind {
                         case .review:
                             Text(
                                 "\(row.repository) · \(row.author) · \(RelativeAge.short(row.created, now: model.now))")
+                            Spacer()
+                            CIDots(row: row)
                         case .mine:
                             Text("\(row.repository) · \(RelativeAge.short(row.created, now: model.now))")
                             Spacer()
-                            VoteSummary(votes: row.votes)
+                            HStack(spacing: 8) {
+                                CIDots(row: row)
+                                VoteSummary(votes: row.votes)
+                            }
                         }
                     }
                     .font(.caption)
@@ -135,7 +239,6 @@ struct PRRowView: View {
             }
         }
         .buttonStyle(RowButtonStyle())
-        .help(row.originalTitle)
     }
 }
 

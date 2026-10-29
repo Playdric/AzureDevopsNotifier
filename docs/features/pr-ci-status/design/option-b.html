@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Option B — One dot per pipeline</title>
+<style>/* Tokens — approximations macOS 26 system colors / SF Pro (HIG). En SwiftUI : couleurs sémantiques système, pas de valeurs codées. */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  --fs-body:13px; --fs-small:11px; --fs-title:15px;
+  --label:rgba(0,0,0,.85); --label2:rgba(0,0,0,.55); --label3:rgba(0,0,0,.3);
+  --sep:rgba(0,0,0,.1); --hover:rgba(0,0,0,.06); --fill:rgba(0,0,0,.05);
+  --accent:#007AFF; --accent-fg:#fff; --red:#FF3B30; --orange:#FF9500; --green:#34C759; --yellow:#FFCC00; --gray:#8E8E93;
+  --panel:rgba(246,246,248,.80); --panel-solid:#f6f6f8; --window:#ececec; --control:#fff;
+  --shadow:0 0 0 .5px rgba(0,0,0,.18),0 12px 40px rgba(0,0,0,.25);
+  --r-panel:16px; --r-row:8px; --r-ctl:6px;
+  --wall:linear-gradient(135deg,#7aa7d8 0%,#b7c9e8 40%,#e9c9b4 100%);
+  --menubar:rgba(255,255,255,.55);
+  --t-bug:#CC293D; --t-story:#009CCC; --t-task:#F2CB1D; --t-pbi:#009CCC; --t-feature:#773B93;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --label:rgba(255,255,255,.88); --label2:rgba(255,255,255,.55); --label3:rgba(255,255,255,.3);
+  --sep:rgba(255,255,255,.12); --hover:rgba(255,255,255,.08); --fill:rgba(255,255,255,.07);
+  --accent:#0A84FF; --red:#FF453A; --orange:#FF9F0A; --green:#30D158; --yellow:#FFD60A; --gray:#98989D;
+  --panel:rgba(38,38,42,.78); --panel-solid:#26262a; --window:#2b2b2e; --control:#3a3a3d;
+  --shadow:0 0 0 .5px rgba(255,255,255,.15),0 12px 40px rgba(0,0,0,.6);
+  --wall:linear-gradient(135deg,#1d2b4a 0%,#2f3550 50%,#4a3040 100%); --menubar:rgba(30,30,30,.5);
+}}
+:root[data-theme="dark"]{
+  --label:rgba(255,255,255,.88); --label2:rgba(255,255,255,.55); --label3:rgba(255,255,255,.3);
+  --sep:rgba(255,255,255,.12); --hover:rgba(255,255,255,.08); --fill:rgba(255,255,255,.07);
+  --accent:#0A84FF; --red:#FF453A; --orange:#FF9F0A; --green:#30D158; --yellow:#FFD60A; --gray:#98989D;
+  --panel:rgba(38,38,42,.78); --panel-solid:#26262a; --window:#2b2b2e; --control:#3a3a3d;
+  --shadow:0 0 0 .5px rgba(255,255,255,.15),0 12px 40px rgba(0,0,0,.6);
+  --wall:linear-gradient(135deg,#1d2b4a 0%,#2f3550 50%,#4a3040 100%); --menubar:rgba(30,30,30,.5);
+}
+*{box-sizing:border-box}
+body{margin:0;font:var(--fs-body)/1.35 var(--font);color:var(--label);background:var(--wall);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:1px;border-radius:5px}
+.doc{max-width:1100px;margin:0 auto;padding:16px}
+.doc-head{background:var(--panel-solid);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px}
+.doc-head h1{font-size:17px;margin:0 0 4px}
+.doc-head p{margin:4px 0;color:var(--label2)}
+.switch{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.switch button{border:0;background:var(--fill);padding:4px 10px;border-radius:999px;cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.switch .lbl{color:var(--label2);align-self:center;margin-right:4px;font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em}
+.menubar{height:26px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;justify-content:flex-end;align-items:center;gap:14px;padding:0 14px;border-radius:8px 8px 0 0;font-size:13px}
+.menubar .mbi{display:inline-flex;align-items:center;justify-content:center;height:22px;min-width:26px;border-radius:5px;padding:0 4px}
+.menubar .mbi.open{background:var(--hover)}
+.stage{position:relative;min-height:640px;border-radius:8px;padding-bottom:24px}
+.glass{background:var(--panel);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);box-shadow:var(--shadow);border-radius:var(--r-panel)}
+.muted-text{color:var(--label2)} .small{font-size:var(--fs-small)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.btn{border:0;border-radius:var(--r-ctl);padding:3px 10px;background:var(--control);box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 1px 1px rgba(0,0,0,.06);cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:none}
+.btn:disabled{opacity:.45;cursor:default}
+.ibtn{border:0;background:transparent;width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--label2)}
+.ibtn:hover{background:var(--hover);color:var(--label)}
+.ibtn[aria-pressed="true"]{color:var(--accent)}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tdot{width:8px;height:8px;border-radius:2px;flex:none}
+.spin{width:12px;height:12px;border:2px solid var(--label3);border-top-color:var(--label);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.skel{background:linear-gradient(90deg,var(--fill),var(--hover),var(--fill));background-size:200% 100%;animation:sk 1.4s infinite;border-radius:4px;height:10px}
+@keyframes sk{to{background-position:-200% 0}}
+.notes{background:var(--panel-solid);border-radius:12px;padding:12px 16px;margin-top:16px;box-shadow:var(--shadow)}
+.notes h2{font-size:14px;margin:4px 0 8px} .notes li{margin:3px 0}
+
+.panel{width:380px;max-width:100%;display:flex;flex-direction:column;overflow:hidden}
+.panel .scroll{padding:4px 6px}
+.sec-h{display:flex;align-items:center;gap:6px;padding:8px 8px 4px;font-size:var(--fs-small);font-weight:600;color:var(--label2)}
+.sec-h .cnt{margin-left:auto;font-weight:500;color:var(--label3)}
+.row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r-row);cursor:pointer;width:100%;border:0;background:none;text-align:left}
+.row:hover{background:var(--hover)}
+.row .main{flex:1;min-width:0}
+.row .t{white-space:nowrap;overflow:hidden;display:flex;gap:6px;align-items:center}
+.row .t span.tt{overflow:hidden;text-overflow:ellipsis}
+.row .s{font-size:var(--fs-small);color:var(--label2);white-space:nowrap;display:flex;gap:6px;align-items:center}
+.row .s .meta{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.row .s .right{margin-left:auto;display:inline-flex;gap:8px;align-items:center;flex:none}
+.newdot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.nodot{width:7px;flex:none}
+.draft{font-size:10px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--fill);color:var(--label2);flex:none}
+.votes{display:inline-flex;gap:5px;font-weight:600}
+.foot{display:flex;align-items:center;padding:6px 12px;border-top:1px solid var(--sep);font-size:var(--fs-small);color:var(--label2)}
+.layout{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.card{background:var(--panel-solid);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);margin-top:16px}
+.card h2{font-size:14px;margin:4px 0 10px}
+table.states{border-collapse:collapse;width:100%}
+table.states td,table.states th{padding:6px 8px;border-top:1px solid var(--sep);text-align:left;vertical-align:middle;font-size:12px}
+table.states th{color:var(--label2);font-weight:600;font-size:var(--fs-small)}
+/* CI indicator, shared bits */
+.ci{position:relative;display:inline-flex;align-items:center;gap:2px;font-weight:600;font-size:10px;cursor:default}
+.ci:focus-visible{outline-offset:2px}
+.c-red{color:var(--red)} .c-green{color:var(--green)} .c-gray{color:var(--label2)} .c-orange{color:var(--orange)}
+svg.g{width:12px;height:12px;flex:none}
+/* A */
+.ci-a.opt svg{opacity:.55}
+/* B */
+.dots{display:inline-flex;gap:3px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.dot.failed{background:var(--red)} .dot.passed{background:var(--green)}
+.dot.running{box-shadow:inset 0 0 0 1.5px var(--accent)} .dot.queued,.dot.expired{box-shadow:inset 0 0 0 1.5px var(--label3)}
+.dot.opt{opacity:.45}
+.dots .more{font-size:10px;color:var(--label2);font-weight:500}
+/* C */
+.cap{display:inline-flex;align-items:center;gap:3px;padding:0 6px;border-radius:999px;font-size:10px;font-weight:600;line-height:16px;white-space:nowrap}
+.cap.red{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.cap.redsoft{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--red) 45%,transparent);color:color-mix(in srgb,var(--red) 75%,var(--label2))}
+.cap.green{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.cap.gray{background:var(--fill);color:var(--label2)}
+.ready{font-size:10px;font-weight:600;padding:0 5px;border-radius:4px;background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green);flex:none}
+/* native-like tooltip (.help) : texte brut multi-lignes */
+.tip{position:fixed;z-index:99;max-width:300px;padding:4px 7px;font:11px/1.4 var(--font);white-space:pre;background:var(--panel-solid);color:var(--label);border-radius:5px;box-shadow:0 0 0 .5px var(--sep),0 4px 14px rgba(0,0,0,.2);pointer-events:none}
+/* notifications */
+.notif{width:344px;max-width:100%;display:flex;gap:10px;padding:10px 12px;border-radius:16px;margin-bottom:8px}
+.notif .ic{width:32px;height:32px;border-radius:8px;background:linear-gradient(#2b88d8,#0f5ca8);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px}
+.notif .nt{min-width:0;font-size:12px}
+.notif .nt b{display:block} .notif .nt .sub{display:block}
+.notif .nt .bd{display:block;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notif .when{margin-left:auto;font-size:var(--fs-small);color:var(--label2);flex:none}
+/* settings */
+.form{width:460px;max-width:100%;background:var(--window);border-radius:12px;padding:14px}
+.grp-h{font-size:12px;font-weight:600;margin:4px 6px 6px}
+.grp{background:var(--control);border-radius:8px;box-shadow:0 0 0 .5px var(--sep)}
+.grp .fr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid var(--sep)}
+.grp .fr:first-child{border-top:0}
+.grp .fr .lab{flex:1} .grp .fr .lab small{display:block;color:var(--label2);font-size:var(--fs-small)}
+.grp .fr.new{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.sw{appearance:none;width:32px;height:18px;border-radius:9px;background:var(--label3);position:relative;cursor:pointer;flex:none;margin:0}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sw:checked{background:var(--accent)} .sw:checked::after{left:16px}
+code{font-size:11px}
+@media (max-width:700px){.doc{padding:16px}.panel,.form,.notif{width:100%}}
+</style></head>
+<body>
+<div class="doc">
+<header class="doc-head"><h1>Option B — One dot per pipeline</h1>
+<p>Une pastille 7 px par pipeline (même taille que <code>CategoryDot</code>/<code>NewDot</code>) : rouge échoué, vert réussi, anneau bleu accent en cours, anneau gris en file/expiré. Optionnel = opacité réduite. Au-delà de 6 : « +n ». Ready = badge <code>READY</code> vert façon <code>DRAFT</code>.</p>
+<p class="small">Survoler (ou tabuler sur) l'indicateur CI → tooltip natif <code>.help()</code> (texte brut). Nouveaux éléments surlignés en bleu dans Settings.</p>
+<div class="switch"><span class="lbl">Theme</span><button data-theme-set="light" aria-pressed="false">Light</button><button data-theme-set="dark" aria-pressed="false">Dark</button><button data-theme-set="" aria-pressed="true">System</button>
+<span class="lbl" style="margin-left:12px">Width</span><button data-w="380" aria-pressed="true">Standard 380</button><button data-w="480" aria-pressed="false">Wide 480</button>
+<span class="lbl" style="margin-left:12px">Ready marker</span><button data-ready="1" aria-pressed="true">On</button><button data-ready="0" aria-pressed="false">Off</button></div>
+</header>
+
+<div class="layout">
+  <section class="panel glass" id="panel" aria-label="ADO Notifier panel"></section>
+  <div>
+    <div class="card" style="margin-top:0"><h2>Notifications (My PRs uniquement)</h2><div id="notifs"></div>
+      <p class="small muted-text" style="max-width:344px">Format existant : titre = événement, sous-titre = détail, corps = titre PR nettoyé. Groupées par PR (<code>threadID pr-&lt;id&gt;</code>). Clic → ouvre la PR.</p></div>
+    <div class="card"><h2>Settings › General › Notifications</h2>
+      <div class="form"><div class="grp-h">Notifications</div><div class="grp">
+        <div class="fr"><span class="c-green">✓</span><span class="lab">Notifications allowed</span></div>
+        <div class="fr new"><span class="lab">CI failures<small>When a pipeline fails on one of your pull requests.</small></span><input type="checkbox" class="sw" checked aria-label="CI failures"></div>
+        <div class="fr new"><span class="lab">Ready to merge<small>When one of your pull requests can be completed.</small></span><input type="checkbox" class="sw" checked aria-label="Ready to merge"></div>
+        <div class="fr"><span class="lab">Mute</span><span class="muted-text">Not muted · use the bell in the menu</span></div>
+      </div></div></div>
+  </div>
+</div>
+
+<div class="card"><h2>Tous les états de l'indicateur</h2><table class="states" id="states"></table></div>
+<div class="notes"><h2>Notes</h2><ul><li>Répond directement à « plusieurs pipelines échouent » : on voit 2 rouges sur 4.</li><li>Largeur variable (jusqu'à ~60 px) ; ordre stable = ordre ADO.</li><li>Pastilles seules : couleur = seul porteur d'info → moins accessible (daltonisme rouge/vert) ; label VoiceOver compense, pas la vue.</li><li>En cours : anneau bleu accent (comme ADO, et In Progress WI) — orange évité.</li></ul></div>
+</div>
+
+<script>
+const OPTION='b';
+let showReady=true;
+const P=(name,status,req=true)=>({name,status,req});
+const LABEL={failed:'Failed',passed:'Succeeded',running:'Running',queued:'Queued',expired:'Expired — re-queue needed'};
+const SYM={failed:'✕',passed:'✓',running:'◷',queued:'◷',expired:'↻'};
+const SVG={
+  xfill:'<svg class="g" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/><path d="M4 4l4 4M8 4l-4 4" stroke="var(--panel-solid)" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  xline:'<svg class="g" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.2 4.2l3.6 3.6M7.8 4.2l-3.6 3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+  check:'<svg class="g" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3.6 6.2l1.6 1.6 3.2-3.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  clock:'<svg class="g" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 3.3V6l1.8 1.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
+  merge:'<svg class="g" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/><path d="M4 3v6M4 5.2c0 1.4 1 2 2.6 2H8" fill="none" stroke="var(--panel-solid)" stroke-width="1.3" stroke-linecap="round"/><path d="M7 5.8l1.3 1.4L7 8.6" fill="none" stroke="var(--panel-solid)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+const data={
+  toReview:[
+    {title:'Add retry policy to payment webhook handler',repo:'platform-core',author:'Marc Dubois',age:'3h',isNew:true,ci:[P('PR-Build','failed'),P('Unit Tests','failed'),P('Integration Tests','running'),P('Lint','passed',false)]},
+    {title:'Bump Azure.Identity to 1.13',repo:'billing-web',author:'Sophie Martin',age:'1d',ci:[P('PR-Build','passed'),P('Unit Tests','passed')]},
+    {title:'Update onboarding guide',repo:'docs',author:'Léa Petit',age:'2d',ci:[]},
+    {title:'Migrate build pipeline to .NET 10 and update every NuGet dependency across the solution',repo:'platform-core',author:'Marc Dubois',age:'4d',draft:true,ci:[P('PR-Build','running'),P('Unit Tests','queued')]},
+  ],
+  myPRs:[
+    {title:'CSV export for invoices',repo:'billing-web',age:'5h',isNew:true,votes:{approved:1,wait:1},ci:[P('PR-Build','failed'),P('Unit Tests','passed'),P('E2E','passed',false)]},
+    {title:'Refactor auth middleware to use typed options',repo:'platform-core',age:'2d',votes:{approved:2},ready:true,ci:[P('PR-Build','passed'),P('Unit Tests','passed'),P('Integration Tests','passed')]},
+    {title:'Telemetry sampling (experiment)',repo:'platform-core',age:'6d',draft:true,votes:{none:1},ci:[P('PR-Build','passed'),P('Perf Benchmark','failed',false)]},
+    {title:'Fix flaky date test in reporting',repo:'reporting',age:'8d',votes:{approved:1},ci:[P('PR-Build','expired'),P('Unit Tests','passed')]},
+  ]
+};
+const VOTE={approved:['✓','var(--green)','approved'],wait:['⏸','var(--orange)','waiting for author'],none:['○','var(--label2)','no vote']};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function summary(ci){
+  const f=ci.filter(p=>p.status==='failed'), fr=f.filter(p=>p.req);
+  const pend=ci.filter(p=>['running','queued','expired'].includes(p.status));
+  const state=!ci.length?'none':fr.length?'failed':f.length&&!pend.length?'optfailed':pend.length?'pending':'passed';
+  // f non vide + pending + que optionnels KO → reste "pending" (requis pas encore connus)
+  return {state:(state==='pending'&&f.length&&!fr.length)?'pending':state,failed:f.length,failedReq:fr.length,pending:pend.length,total:ci.length};
+}
+function tipText(ci,s){
+  const head={failed:`CI · ${s.failed} of ${s.total} failed`,optfailed:`CI · optional pipeline failed`,pending:`CI · ${s.pending} of ${s.total} pending`,passed:`CI · all ${s.total} succeeded`}[s.state];
+  return head+'\n'+ci.map(p=>`${SYM[p.status]} ${p.name}${p.req?'':' (optional)'} — ${LABEL[p.status]}`).join('\n');
+}
+function a11y(s){
+  return {failed:`CI: ${s.failed} of ${s.total} failed`,optfailed:'CI: optional pipeline failed',pending:'CI: running',passed:'CI: succeeded'}[s.state];
+}
+function ciHTML(pr,kind){
+  const ci=pr.ci, s=summary(ci); if(s.state==='none') return '';
+  const ready=showReady&&kind==='mine'&&pr.ready&&!pr.draft;
+  let inner='', cls='';
+  if(OPTION==='a'){
+    cls='ci-a';
+    if(ready) inner=`<span class="c-green">${SVG.merge}</span>`;
+    else if(s.state==='failed') inner=`<span class="c-red" style="display:inline-flex;gap:2px;align-items:center">${SVG.xfill}${s.failed>1?s.failed:''}</span>`;
+    else if(s.state==='optfailed'){cls+=' opt'; inner=`<span class="c-red">${SVG.xline}</span>`;}
+    else if(s.state==='pending') inner=`<span class="c-gray">${SVG.clock}</span>`;
+    else inner=`<span class="c-green">${SVG.check}</span>`;
+  } else if(OPTION==='b'){
+    const MAX=6, shown=ci.slice(0,MAX);
+    inner=`<span class="dots">${shown.map(p=>`<span class="dot ${p.status}${p.req?'':' opt'}"></span>`).join('')}${ci.length>MAX?`<span class="more">+${ci.length-MAX}</span>`:''}</span>`;
+  } else {
+    if(s.state==='failed') inner=`<span class="cap red">✕ ${s.failed} Failed</span>`;
+    else if(s.state==='optfailed') inner=`<span class="cap redsoft">✕ Optional</span>`;
+    else if(s.state==='pending') inner=`<span class="cap gray">◷ Running</span>`;
+    else inner=`<span class="cap green">✓ Passed</span>`;
+  }
+  return `<span class="ci ${cls}" tabindex="0" role="img" aria-label="${esc(a11y(s)+(ready?', ready to merge':''))}" data-tip="${esc(tipText(ci,s)+(ready?'\n\nReady to merge':''))}">${inner}</span>`;
+}
+function votesHTML(v){ return `<span class="votes">${Object.entries(v||{}).map(([k,n])=>`<span style="color:${VOTE[k][1]}" aria-label="${n} ${VOTE[k][2]}">${VOTE[k][0]}${n>1?'<span style="font-size:10px"> '+n+'</span>':''}</span>`).join('')}</span>`; }
+function readyBadge(pr,kind){ return OPTION!=='a'&&showReady&&kind==='mine'&&pr.ready&&!pr.draft?'<span class="ready">READY</span>':''; }
+function prRow(pr,kind){
+  const meta=kind==='review'?`${esc(pr.repo)} · ${esc(pr.author)} · ${pr.age}`:`${esc(pr.repo)} · ${pr.age}`;
+  const right=`${ciHTML(pr,kind)}${kind==='mine'?votesHTML(pr.votes):''}`;
+  return `<div class="row" title="${esc(pr.title)}">${pr.isNew?'<span class="newdot" aria-label="New"></span>':'<span class="nodot"></span>'}
+    <span class="main"><span class="t">${pr.draft?'<span class="draft">DRAFT</span>':''}${readyBadge(pr,kind)}<span class="tt">${esc(pr.title)}</span></span>
+    <span class="s"><span class="meta">${meta}</span>${right?`<span class="right">${right}</span>`:''}</span></span></div>`;
+}
+function renderPanel(){
+  document.getElementById('panel').innerHTML=`<div class="scroll">
+    <div class="sec-h">▾ To Review<span class="cnt">${data.toReview.length}</span></div>${data.toReview.map(p=>prRow(p,'review')).join('')}
+    <div class="sec-h">▾ My PRs<span class="cnt">${data.myPRs.length}</span></div>${data.myPRs.map(p=>prRow(p,'mine')).join('')}
+    <div class="sec-h">▸ Work Items<span class="cnt">7</span></div></div>
+    <div class="foot">Updated 1 min ago</div>`;
+}
+function renderStates(){
+  const many=['PR-Build','Unit Tests','Integration','E2E','Lint','Security Scan','Perf','Docs'].map((n,i)=>P(n,i<3?'failed':i<5?'passed':'running',i<6));
+  const rows=[
+    ['Aucune build policy',[],'Rien affiché (AC3)'],
+    ['En attente / en cours',[P('PR-Build','running'),P('Unit Tests','queued')],'AC2'],
+    ['Build expiré',[P('PR-Build','expired'),P('Unit Tests','passed')],'Traité comme en attente'],
+    ['Tout réussi',[P('PR-Build','passed'),P('Unit Tests','passed'),P('Lint','passed',false)],'AC2'],
+    ['Prête à merger (My PRs)',[P('PR-Build','passed'),P('Unit Tests','passed')],'Marqueur Ready — à trancher',true],
+    ['1 requis échoué',[P('PR-Build','failed'),P('Unit Tests','passed')],'AC1'],
+    ['2 requis + 1 optionnel échoués',[P('PR-Build','failed'),P('Unit Tests','failed'),P('Lint','failed',false),P('E2E','running')],'Compteur = 3 (tous échecs)'],
+    ['Seul un optionnel échoué',[P('PR-Build','passed'),P('Perf','failed',false)],'Atténué (AC4)'],
+    ['8 pipelines',many,'Débordement'],
+  ];
+  document.getElementById('states').innerHTML='<tr><th>État</th><th>Rendu ligne</th><th>Note</th></tr>'+rows.map(([l,ci,n,r])=>
+    `<tr><td>${l}</td><td style="width:60%"><div class="panel glass" style="width:100%;max-width:380px;border-radius:10px">${prRow({title:'Refactor auth middleware',repo:'platform-core',age:'2d',votes:{approved:1},ci,ready:!!r},'mine')}</div></td><td class="muted-text">${n}</td></tr>`).join('');
+}
+function renderNotifs(){
+  const N=[['CI Failed','PR-Build','CSV export for invoices','now'],['CI Failed','Perf Benchmark · optional','Telemetry sampling (experiment)','2m'],['Ready to Merge','platform-core','Refactor auth middleware to use typed options','5m']];
+  document.getElementById('notifs').innerHTML=N.map(([t,s,b,w])=>`<div class="notif glass" role="note"><span class="ic">ADO</span><span class="nt"><b>${t}</b><span class="sub">${esc(s)}</span><span class="bd">${esc(b)}</span></span><span class="when">${w}</span></div>`).join('');
+}
+function render(){ renderPanel(); renderStates(); renderNotifs(); applyWidth(); }
+let width=380; function applyWidth(){ document.getElementById('panel').style.width=width+'px'; }
+const tip=document.createElement('div'); tip.className='tip'; tip.hidden=true; document.body.appendChild(tip);
+function showTip(el){ tip.textContent=el.dataset.tip; tip.hidden=false; const r=el.getBoundingClientRect(); tip.style.left=Math.max(8,Math.min(r.left,innerWidth-tip.offsetWidth-8))+'px'; tip.style.top=(r.bottom+6)+'px'; }
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('[data-tip]'); if(el) showTip(el); else tip.hidden=true; });
+document.addEventListener('focusin',e=>{ const el=e.target.closest('[data-tip]'); if(el) showTip(el); });
+document.addEventListener('focusout',()=>tip.hidden=true);
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const grp=b.parentElement;
+  if('themeSet' in b.dataset){ if(b.dataset.themeSet) document.documentElement.dataset.theme=b.dataset.themeSet; else delete document.documentElement.dataset.theme; }
+  else if(b.dataset.w){ width=+b.dataset.w; }
+  else if(b.dataset.ready){ showReady=b.dataset.ready==='1'; }
+  else return;
+  const key=Object.keys(b.dataset)[0];
+  grp.querySelectorAll('button').forEach(x=>{ if(key in x.dataset) x.setAttribute('aria-pressed',x===b); });
+  render();
+});
+render();
+</script>
+</body></html>

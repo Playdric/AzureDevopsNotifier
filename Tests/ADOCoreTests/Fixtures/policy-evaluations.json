@@ -1,0 +1,9 @@
+{"count":7,"value":[
+ {"evaluationId":"e1","status":"rejected","configuration":{"id":11,"isEnabled":true,"isBlocking":true,"type":{"id":"0609b952-1397-4640-95ec-e00a01b2c241","displayName":"Build"},"settings":{"displayName":"PR-Build","buildDefinitionId":5}},"context":{"buildId":901,"buildDefinitionName":"platform-core-ci","isExpired":false}},
+ {"evaluationId":"e2","status":"running","configuration":{"id":12,"isEnabled":true,"isBlocking":true,"type":{"id":"0609b952-1397-4640-95ec-e00a01b2c241","displayName":"Build"},"settings":{"displayName":null,"buildDefinitionId":6}},"context":{"buildId":902,"buildDefinitionName":"Unit Tests"}},
+ {"evaluationId":"e3","status":"approved","configuration":{"id":13,"isEnabled":true,"isBlocking":false,"type":{"id":"0609b952-1397-4640-95ec-e00a01b2c241","displayName":"Build"},"settings":{"displayName":"Lint"}},"context":{"buildId":903}},
+ {"evaluationId":"e4","status":"queued","configuration":{"id":14,"isEnabled":true,"isBlocking":true,"type":{"id":"0609b952-1397-4640-95ec-e00a01b2c241","displayName":"Build"},"settings":{}},"context":{"buildId":880,"isExpired":true}},
+ {"evaluationId":"e5","status":"notApplicable","configuration":{"id":15,"isEnabled":true,"isBlocking":true,"type":{"id":"0609b952-1397-4640-95ec-e00a01b2c241","displayName":"Build"},"settings":{"displayName":"Docs Build"}}},
+ {"evaluationId":"e6","status":"approved","configuration":{"id":20,"isEnabled":true,"isBlocking":true,"type":{"id":"fa4e907d-c16b-4a4c-9dfa-4906e5d171dd","displayName":"Minimum number of reviewers"},"settings":{}}},
+ {"evaluationId":"e7","status":"queued","configuration":{"id":21,"isEnabled":true,"isBlocking":true,"type":{"id":"40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e","displayName":"Work item linking"},"settings":{}}}
+]}

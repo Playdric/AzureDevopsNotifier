@@ -82,6 +82,18 @@ struct GeneralSettingsView: View {
                 } else {
                     Label("Notifications allowed", systemImage: "checkmark.circle").foregroundStyle(.green)
                 }
+                Toggle(
+                    isOn: Binding(get: { model.prefs.notifyCIFailures }, set: { model.prefs.notifyCIFailures = $0 })
+                ) {
+                    Text("CI failures")
+                    Text("When a pipeline fails on one of your pull requests.")
+                }
+                Toggle(
+                    isOn: Binding(get: { model.prefs.notifyReadyToMerge }, set: { model.prefs.notifyReadyToMerge = $0 })
+                ) {
+                    Text("Ready to merge")
+                    Text("When one of your pull requests can be completed.")
+                }
                 LabeledContent("Mute") {
                     if case .until(let end) = model.prefs.mute, model.prefs.mute.isActive(at: model.now) {
                         Text("Muted until \(end.formatted(Formats.muteEnd))")

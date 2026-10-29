@@ -5,6 +5,11 @@ import SwiftUI
 struct ADONotifierApp: App {
     @State private var model = AppModel()
 
+    init() {
+        // Info-bulles (titres complets) : délai système ~1 s trop long pour un survol de liste.
+        UserDefaults.standard.register(defaults: ["NSInitialToolTipDelay": 300])
+    }
+
     var body: some Scene {
         MenuBarExtra {
             PanelView()

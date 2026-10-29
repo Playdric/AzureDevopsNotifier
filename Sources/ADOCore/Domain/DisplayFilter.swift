@@ -24,7 +24,8 @@ public struct DisplayFilter: Sendable {
     public func hides(_ event: NotifiableEvent) -> Bool {
         switch event {
         case .reviewRequested(let pr): hides(review: pr)
-        case .prComment(let pr, _, _, _), .prVote(let pr, _, _): hides(mine: pr)
+        case .prComment(let pr, _, _, _), .prVote(let pr, _, _), .ciFailed(let pr, _, _), .readyToMerge(let pr):
+            hides(mine: pr)
         case .workItemAssigned(let wi), .workItemComment(let wi, _, _): hides(wi)
         }
     }

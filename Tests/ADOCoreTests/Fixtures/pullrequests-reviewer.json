@@ -1,9 +1,9 @@
 {"count":3,"value":[
- {"pullRequestId":101,"title":"[Payments][P1] Add retry policy","status":"active","isDraft":false,"creationDate":"2026-10-28T10:15:30.1234567Z",
+ {"pullRequestId":101,"title":"[Payments][P1] Add retry policy","status":"active","isDraft":false,"mergeStatus":"succeeded","creationDate":"2026-10-28T10:15:30.1234567Z",
   "createdBy":{"id":"u-sarah","displayName":"Sarah Chen"},
   "repository":{"id":"r1","name":"payments-api","project":{"id":"p1","name":"Billing"}},
   "reviewers":[{"id":"u-me","displayName":"Cédric Nanteau","vote":0,"isRequired":true},{"id":"u-marc","displayName":"Marc Dubois","vote":10}]},
- {"pullRequestId":102,"title":"Group only","status":"active","creationDate":"2026-10-27T08:00:00Z",
+ {"pullRequestId":102,"title":"Group only","status":"active","mergeStatus":"conflicts","creationDate":"2026-10-27T08:00:00Z",
   "createdBy":{"id":"u-marc","displayName":"Marc Dubois"},
   "repository":{"id":"r2","name":"platform-core","project":{"id":"p1","name":"Billing"}},
   "reviewers":[{"id":"g-team","displayName":"[Billing]\\Billing Team","vote":0,"isContainer":true}]},

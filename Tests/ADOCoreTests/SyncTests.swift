@@ -80,6 +80,84 @@ struct EventDifferTests {
     }
 }
 
+struct CIEventTests {
+    private let mine = pr(9, author: me)
+    private func build(_ id: Int, _ status: PipelineStatus, required: Bool = true, buildID: Int = 1) -> PipelineCheck {
+        PipelineCheck(id: id, name: "Build \(id)", status: status, isRequired: required, buildID: buildID)
+    }
+    private func diff(_ before: PRChecks?, _ after: PRChecks?, old: PullRequest? = nil, new: PullRequest? = nil)
+        -> [NotifiableEvent]
+    {
+        let o = old ?? mine
+        let n = new ?? mine
+        return EventDiffer.diff(
+            old: snap(myPRs: [o], checks: before.map { [o.id: $0] } ?? [:]),
+            new: snap(myPRs: [n], checks: after.map { [n.id: $0] } ?? [:]))
+    }
+
+    // AC7, AC8, AC10
+    @Test func failuresNotifiedPerPipeline() {
+        let events = diff(
+            checks(build(1, .running), build(2, .queued), build(3, .running, required: false)),
+            checks(build(1, .failed), build(2, .failed), build(3, .failed, required: false)))
+        #expect(
+            events == [
+                .ciFailed(mine, pipeline: "Build 1", isOptional: false),
+                .ciFailed(mine, pipeline: "Build 2", isOptional: false),
+                .ciFailed(mine, pipeline: "Build 3", isOptional: true),
+            ])
+    }
+
+    // AC9
+    @Test func stillFailingSameBuildIsSilentButRerunFailureIsNot() {
+        #expect(diff(checks(build(1, .failed)), checks(build(1, .failed))).isEmpty)
+        #expect(
+            diff(checks(build(1, .failed)), checks(build(1, .failed, buildID: 2)))
+                == [.ciFailed(mine, pipeline: "Build 1", isOptional: false)])
+    }
+
+    @Test func newPipelineAlreadyFailedOnKnownPR() {
+        #expect(diff(checks(), checks(build(4, .failed))) == [.ciFailed(mine, pipeline: "Build 4", isOptional: false)])
+    }
+
+    // AC11, AC12
+    @Test func readyOnTransitionOnly() {
+        #expect(diff(checks(build(1, .running)), checks(build(1, .passed), ready: true)) == [.readyToMerge(mine)])
+        #expect(diff(checks(build(1, .passed), ready: true), checks(build(1, .passed), ready: true)).isEmpty)
+        #expect(diff(checks(ready: true), checks(ready: false)).isEmpty)
+    }
+
+    // AC14
+    @Test func draftOrConflictIsNeverReady() {
+        #expect(diff(checks(), checks(ready: true), new: pr(9, author: me, draft: true)).isEmpty)
+        #expect(diff(checks(), checks(ready: true), new: pr(9, author: me, conflict: true)).isEmpty)
+        // Conflit résolu, policies déjà OK : devient prête.
+        #expect(
+            diff(checks(ready: true), checks(ready: true), old: pr(9, author: me, conflict: true))
+                == [.readyToMerge(mine)])
+    }
+
+    // AC13
+    @Test func newPullRequestAbsorbsItsCIState() {
+        let new = snap(myPRs: [mine], checks: [9: checks(build(1, .failed), ready: true)])
+        #expect(EventDiffer.diff(old: snap(), new: new).isEmpty)
+    }
+
+    // AC16
+    @Test func unknownChecksOnEitherSideAreSilent() {
+        #expect(diff(nil, checks(build(1, .failed), ready: true)).isEmpty)
+        #expect(diff(checks(build(1, .failed)), nil).isEmpty)
+    }
+
+    // AC6
+    @Test func reviewPullRequestsNeverProduceCIEvents() {
+        let other = pr(5)
+        let old = snap(toReview: [other], checks: [5: checks(build(1, .running))])
+        let new = snap(toReview: [other], checks: [5: checks(build(1, .failed), ready: true)])
+        #expect(EventDiffer.diff(old: old, new: new).isEmpty)
+    }
+}
+
 struct SyncServiceTests {
     final class FakeADO: @unchecked Sendable {
         let snapshots: Mutex<[Result<Snapshot, ADOError>]>

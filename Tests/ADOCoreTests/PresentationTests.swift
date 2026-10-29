@@ -163,6 +163,83 @@ struct PanelStateTests {
     }
 }
 
+struct PRRowCITests {
+    private var prefs: Preferences {
+        var p = Preferences()
+        p.orgURL = org
+        p.me = me
+        p.projects = [Project(id: "p1", name: "Billing")]
+        return p
+    }
+    private func build(_ id: Int, _ name: String, _ status: PipelineStatus, required: Bool = true) -> PipelineCheck {
+        PipelineCheck(id: id, name: name, status: status, isRequired: required)
+    }
+    private func row(_ c: PRChecks?, pr p: PullRequest = pr(1, author: me), mine: Bool = true) -> PRRow {
+        let s =
+            mine
+            ? snap(myPRs: [p], checks: c.map { [p.id: $0] } ?? [:])
+            : snap(toReview: [p], checks: c.map { [p.id: $0] } ?? [:])
+        let state = PanelState.make(prefs: prefs, snapshot: s, status: .idle, seen: [], now: t0)
+        return (mine ? state.myPRs : state.toReview).rows[0]
+    }
+
+    // AC1, AC5
+    @Test func failuresCountedAndDetailed() {
+        let r = row(
+            checks(
+                build(1, "PR-Build", .failed), build(2, "Unit Tests", .failed),
+                build(3, "Lint", .passed, required: false)))
+        #expect(r.pipelines.map(\.id) == [1, 2, 3])
+        #expect(r.ciAccessibilityLabel == "CI: 2 of 3 failed")
+        #expect(r.ciHeader == "CI · 2 of 3 failed")
+    }
+
+    // AC2, cas limite expiré
+    @Test func pendingAndPassed() {
+        let pending = row(checks(build(1, "A", .running), build(2, "B", .queued), build(3, "C", .expired)))
+        #expect(pending.ciAccessibilityLabel == "CI: running")
+        #expect(pending.ciHeader == "CI · 3 of 3 pending")
+        #expect(pending.pipelines.map(\.status.label) == ["Running", "Queued", "Expired — re-queue needed"])
+        let passed = row(checks(build(1, "A", .passed), build(2, "B", .passed)))
+        #expect(passed.ciAccessibilityLabel == "CI: succeeded")
+        #expect(passed.ciHeader == "CI · all 2 succeeded")
+    }
+
+    // AC3, AC16
+    @Test func nothingWithoutPipelines() {
+        for r in [row(nil), row(checks())] {
+            #expect(r.pipelines.isEmpty)
+            #expect(r.ciHeader == nil)
+            #expect(r.ciAccessibilityLabel == nil)
+        }
+    }
+
+    // AC4 ; optionnel KO + build requis en cours : encore en attente.
+    @Test func optionalFailureIsDistinct() {
+        let r = row(checks(build(1, "A", .passed), build(2, "Perf", .failed, required: false)))
+        #expect(r.ciAccessibilityLabel == "CI: optional pipeline failed")
+        #expect(r.ciHeader == "CI · optional pipeline failed")
+        #expect(!r.pipelines[1].isRequired)
+        let stillRunning = row(checks(build(1, "A", .running), build(2, "Perf", .failed, required: false)))
+        #expect(stillRunning.ciAccessibilityLabel == "CI: running")
+    }
+
+    // AC6, AC17
+    @Test func readyOnlyForMyPublishedPullRequests() {
+        let ok = checks(build(1, "A", .passed), ready: true)
+        let r = row(ok)
+        #expect(r.isReady)
+        #expect(r.ciAccessibilityLabel == "CI: succeeded, ready to merge")
+        #expect(row(checks(ready: true)).isReady)  // aucune policy CI : prête quand même
+        #expect(!row(ok, pr: pr(1, author: me, draft: true)).isReady)
+        #expect(!row(ok, pr: pr(1, author: me, conflict: true)).isReady)
+        #expect(!row(checks(build(1, "A", .passed))).isReady)
+        let review = row(ok, pr: pr(1), mine: false)
+        #expect(!review.isReady)
+        #expect(review.pipelines.count == 1)
+    }
+}
+
 struct NotificationContentTests {
     private let links = WebLinks(org: org)
     private let tags = TagSettings(hidden: ["p1"])
@@ -197,5 +274,22 @@ struct NotificationContentTests {
             .workItemComment(wi(42), author: priya, text: String(repeating: "a", count: 200)), tags: tags, links: links)
         #expect(wiComment.title == "Priya Natarajan commented on #42")
         #expect(wiComment.subtitle?.count == 122)
+
+        // AC7, AC10, AC11
+        let failed = NotificationContent.make(
+            .ciFailed(p, pipeline: "PR-Build", isOptional: false), tags: tags, links: links)
+        #expect(failed.title == "CI Failed")
+        #expect(failed.subtitle == "PR-Build")
+        #expect(failed.body == "Add retry")
+        #expect(failed.url == links.pullRequest(p))
+        #expect(failed.threadID == "pr-7")
+        let optional = NotificationContent.make(
+            .ciFailed(p, pipeline: "Lint", isOptional: true), tags: tags, links: links)
+        #expect(optional.subtitle == "Lint · optional")
+        let ready = NotificationContent.make(.readyToMerge(p), tags: tags, links: links)
+        #expect(ready.title == "Ready to Merge")
+        #expect(ready.subtitle == "payments-api")
+        #expect(ready.body == "Add retry")
+        #expect(ready.threadID == "pr-7")
     }
 }

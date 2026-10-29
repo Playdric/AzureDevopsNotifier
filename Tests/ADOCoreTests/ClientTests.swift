@@ -80,10 +80,51 @@ struct ADOClientTests {
         #expect(prs[0].creationDate.timeIntervalSince1970 > 0)
         #expect(prs[1].reviewers[0].isContainer)
         #expect(prs[2].isDraft)
+        #expect(prs[0].projectID == "p1")
+        #expect(prs.map(\.hasMergeConflict) == [false, true, false])
         let request = transport.requests[0]
         #expect(query(request, "searchCriteria.reviewerId") == "u-me")
         #expect(query(request, "searchCriteria.status") == "active")
         #expect(query(request, "api-version") == "7.1")
+    }
+
+    @Test func prChecksKeepBuildValidationOnly() async throws {
+        let (client, transport) = client { _ in (200, fixture("policy-evaluations")) }
+        let checks = try await client.prChecks(projectID: "p1", projectName: "Billing", pullRequestID: 101)
+        #expect(
+            checks.pipelines == [
+                PipelineCheck(id: 11, name: "PR-Build", status: .failed, buildID: 901),
+                PipelineCheck(id: 12, name: "Unit Tests", status: .running, buildID: 902),
+                PipelineCheck(id: 13, name: "Lint", status: .passed, isRequired: false, buildID: 903),
+                PipelineCheck(id: 14, name: "Build", status: .expired, buildID: 880),
+            ])
+        #expect(!checks.blockingSatisfied)
+        let request = transport.requests[0]
+        #expect(request.url?.path() == "/contoso/Billing/_apis/policy/evaluations")
+        #expect(query(request, "artifactId") == "vstfs:///CodeReview/CodeReviewId/p1/101")
+        #expect(query(request, "api-version") == "7.1-preview.1")
+    }
+
+    // Non applicables et désactivées ignorées ; optionnelles ne bloquent pas.
+    @Test func blockingSatisfiedWhenEveryActiveBlockingPolicyApproved() async throws {
+        func evaluation(
+            _ id: Int, _ status: String, blocking: Bool = true, enabled: Bool = true,
+            type: String = "0609b952-1397-4640-95ec-e00a01b2c241"
+        ) -> String {
+            #"{"status":"\#(status)","configuration":{"id":\#(id),"isEnabled":\#(enabled),"isBlocking":\#(blocking),"type":{"id":"\#(type)"}}}"#
+        }
+        let body =
+            #"{"value":["#
+            + [
+                evaluation(1, "approved"), evaluation(2, "rejected", blocking: false), evaluation(3, "notApplicable"),
+                evaluation(4, "rejected", enabled: false),
+                // Merge strategy : rejetée tant que la PR n'est pas complétée, ADO autorise *Complete*.
+                evaluation(5, "rejected", type: "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"),
+            ].joined(separator: ",") + "]}"
+        let (client, _) = client { _ in (200, Data(body.utf8)) }
+        let checks = try await client.prChecks(projectID: "p1", projectName: "Billing", pullRequestID: 1)
+        #expect(checks.blockingSatisfied)
+        #expect(checks.pipelines.map(\.id) == [1, 2])
     }
 
     @Test func threadsDropDeletedAndFlagSystem() async throws {
@@ -154,7 +195,7 @@ struct ADOClientTests {
 }
 
 struct SnapshotFetcherTests {
-    private static func route(_ request: URLRequest) -> (Int, Data)? {
+    static func route(_ request: URLRequest) -> (Int, Data)? {
         let path = request.url!.path()
         if path.hasSuffix("/Billing/_apis/wit/workitemtypes") { return (200, fixture("workitemtypes-agile")) }
         if path.hasSuffix("/Mobile/_apis/wit/workitemtypes") { return (200, fixture("workitemtypes-scrum")) }
@@ -165,6 +206,10 @@ struct SnapshotFetcherTests {
         }
         if path.hasSuffix("/_apis/git/pullrequests") { return (200, Data(#"{"value":[]}"#.utf8)) }
         if path.hasSuffix("/threads") { return (200, fixture("threads")) }
+        if path.hasSuffix("/_apis/policy/evaluations") {
+            return query(request, "artifactId")!.hasSuffix("/103")
+                ? (500, Data()) : (200, fixture("policy-evaluations"))
+        }
         if path.hasSuffix("/_apis/wit/wiql") { return (200, fixture("wiql")) }
         if path.hasSuffix("/_apis/wit/workitemsbatch") { return (200, fixture("workitemsbatch")) }
         if path.hasSuffix("/comments") { return (200, fixture("comments")) }
@@ -196,6 +241,35 @@ struct SnapshotFetcherTests {
                 with: transport.requests.first { $0.url!.path().hasSuffix("wiql") }!.httpBody!) as! [String: String]
         #expect(wiql["query"]!.contains("IN ('Billing', 'Mobile')"))
         #expect(wiql["query"]!.contains("NOT IN ('Closed', 'Done', 'Removed')"))
+    }
+
+    // AC16 : erreur sur les policies d'une PR → snapshot OK, dernier état connu (aucun au premier sync).
+    @Test func checksAreBestEffortPerPullRequest() async throws {
+        let (fetcher, _) = fetcher()
+        var snapshot = try await fetcher.fetch(previous: nil, refreshTypes: true, now: t0)
+        #expect(snapshot.checks[101]?.pipelines.count == 4)
+        #expect(snapshot.checks[103] == nil)
+        #expect(snapshot.myPRs.map(\.id) == [103])
+
+        let known = checks(PipelineCheck(id: 1, name: "Build", status: .running), ready: false)
+        snapshot.checks[103] = known
+        let next = try await fetcher.fetch(previous: snapshot, refreshTypes: false, now: t0)
+        #expect(next.checks[103] == known)
+    }
+
+    @Test func cancellationDuringChecksIsNotSwallowed() async {
+        struct CancelChecks: HTTPTransport {
+            let base = StubTransport(SnapshotFetcherTests.route)
+            func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+                if request.url!.path().hasSuffix("/_apis/policy/evaluations") { throw URLError(.cancelled) }
+                return try await base.send(request)
+            }
+        }
+        let fetcher = SnapshotFetcher(
+            client: ADOClient(org: org, pat: "x", transport: CancelChecks()), me: me, projects: ["Billing"])
+        await #expect(throws: CancellationError.self) {
+            try await fetcher.fetch(previous: nil, refreshTypes: true, now: t0)
+        }
     }
 
     @Test func reusesTypesAndLoadsCommentsOnlyWhenCountGrows() async throws {

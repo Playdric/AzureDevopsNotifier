@@ -63,10 +63,17 @@ let types: TypeCatalog = [
     "Mobile": ["Product Backlog Item": scrumPBI],
 ]
 
-func pr(_ id: Int, title: String = "PR", author: Identity = sarah, reviewers: [Reviewer] = []) -> PullRequest {
+func pr(
+    _ id: Int, title: String = "PR", author: Identity = sarah, reviewers: [Reviewer] = [], draft: Bool = false,
+    conflict: Bool = false
+) -> PullRequest {
     PullRequest(
-        id: id, title: title, projectName: "Billing", repositoryName: "payments-api", author: author,
-        creationDate: t0, reviewers: reviewers)
+        id: id, title: title, projectID: "p1", projectName: "Billing", repositoryName: "payments-api", author: author,
+        creationDate: t0, isDraft: draft, reviewers: reviewers, hasMergeConflict: conflict)
+}
+
+func checks(_ pipelines: PipelineCheck..., ready: Bool = false) -> PRChecks {
+    PRChecks(pipelines: pipelines, blockingSatisfied: ready)
 }
 
 func wi(_ id: Int, type: String = "Bug", state: String = "Active", project: String = "Billing", comments: Int = 0)
@@ -77,9 +84,10 @@ func wi(_ id: Int, type: String = "Bug", state: String = "Active", project: Stri
 
 func snap(
     toReview: [PullRequest] = [], myPRs: [PullRequest] = [], threads: [Int: [PRThread]] = [:],
-    workItems: [WorkItem] = [], wiComments: [Int: [Comment]] = [:], at date: Date = t0
+    checks: [Int: PRChecks] = [:], workItems: [WorkItem] = [], wiComments: [Int: [Comment]] = [:], at date: Date = t0
 ) -> Snapshot {
     Snapshot(
-        me: me, toReview: toReview, myPRs: myPRs, threads: threads, workItems: workItems, workItemComments: wiComments,
+        me: me, toReview: toReview, myPRs: myPRs, threads: threads, checks: checks, workItems: workItems,
+        workItemComments: wiComments,
         types: types, fetchedAt: date)
 }

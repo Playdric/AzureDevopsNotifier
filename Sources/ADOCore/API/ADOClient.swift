@@ -52,6 +52,18 @@ public struct ADOClient: Sendable {
         return dto.value.filter { $0.isDeleted != true }.map(\.model)
     }
 
+    /// Évaluations de policies d'une PR (builds, reviewers, WI liés…).
+    public func prChecks(projectID: String, projectName: String, pullRequestID: Int) async throws -> PRChecks {
+        let dto: ListDTO<PolicyEvaluationDTO> = try await get(
+            org.base.appending(path: projectName).appending(path: "_apis/policy/evaluations"),
+            query: [
+                URLQueryItem(
+                    name: "artifactId", value: "vstfs:///CodeReview/CodeReviewId/\(projectID)/\(pullRequestID)")
+            ],
+            version: "7.1-preview.1")
+        return dto.value.model
+    }
+
     public func workItemTypes(project: String) async throws -> [WorkItemType] {
         let dto: ListDTO<WorkItemTypeDTO> = try await get(
             org.base.appending(path: project).appending(path: "_apis/wit/workitemtypes"))
